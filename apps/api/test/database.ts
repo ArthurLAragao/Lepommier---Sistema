@@ -47,7 +47,7 @@ export function migrate(rawUrl: string, config?: string) {
     );
 }
 /** Fresh named DBs are retained. Never reset/drop the supplied database. */
-export async function freshDatabase(upgrade: boolean | 'identity' = false) {
+export async function freshDatabase(upgrade: boolean | 'identity' | 'registry' = false) {
   const url = testUrl();
   const name = `pommier_${randomUUID().replaceAll('-', '').slice(0, 12)}_test`;
   const admin = new pg.Client({ connectionString: url.toString() });
@@ -63,6 +63,8 @@ export async function freshDatabase(upgrade: boolean | 'identity' = false) {
   let legacy:
     | { userId: string; passwordHash: string; initializedAt: Date; sessionDigest: string }
     | undefined;
+  let registryLegacy:
+    { customerId: string; productId: string; categoryId: string; marketingId: string } | undefined;
   if (!client) throw new Error('Test database client missing.');
   if (upgrade) {
     const path = resolve(projectRoot, 'data/test-runs', name);
@@ -75,13 +77,23 @@ export async function freshDatabase(upgrade: boolean | 'identity' = false) {
       ),
     );
     writeFileSync(resolve(path, 'migrations/migration_lock.toml'), 'provider = "postgresql"\n');
-    if (upgrade === 'identity') {
+    if (upgrade === 'identity' || upgrade === 'registry') {
       const identity = resolve(path, 'migrations/202610170002_identity');
       mkdirSync(identity, { recursive: true });
       writeFileSync(
         resolve(identity, 'migration.sql'),
         readFileSync(
           resolve(projectRoot, 'apps/api/prisma/migrations/202610170002_identity/migration.sql'),
+        ),
+      );
+    }
+    if (upgrade === 'registry') {
+      const registry = resolve(path, 'migrations/202610170003_registry');
+      mkdirSync(registry, { recursive: true });
+      writeFileSync(
+        resolve(registry, 'migration.sql'),
+        readFileSync(
+          resolve(projectRoot, 'apps/api/prisma/migrations/202610170003_registry/migration.sql'),
         ),
       );
     }
@@ -94,7 +106,7 @@ export async function freshDatabase(upgrade: boolean | 'identity' = false) {
     await client.storeSettings.create({
       data: { id: 1, createdAt: new Date('2001-01-01T00:00:00Z') },
     });
-    if (upgrade === 'identity') {
+    if (upgrade === 'identity' || upgrade === 'registry') {
       const { PasswordHasher } = await import('../src/auth/password.js');
       const { tokenDigest } = await import('../src/auth/security.js');
       const passwordHash = await new PasswordHasher().hash(randomUUID());
@@ -126,8 +138,51 @@ export async function freshDatabase(upgrade: boolean | 'identity' = false) {
         },
       });
       legacy = { userId: user.id, passwordHash, initializedAt, sessionDigest };
+      if (upgrade === 'registry') {
+        const customer = await client.customer.create({
+          data: {
+            name: 'Preserved synthetic customer',
+            nameKey: 'preserved synthetic customer',
+            phone: '+5585999990001',
+            notes: 'Preserved synthetic note',
+            marketingState: 'OPTED_OUT',
+          },
+        });
+        const marketing = await client.marketingPreferenceEvent.create({
+          data: {
+            customerId: customer.id,
+            actorId: user.id,
+            previousState: 'UNKNOWN',
+            state: 'OPTED_OUT',
+            source: 'CUSTOMER_REQUEST',
+            reason: 'CUSTOMER_REQUEST',
+            evidence: 'Synthetic retained reference',
+          },
+        });
+        const category = await client.category.create({
+          data: { name: 'Preserved category', nameKey: 'preserved category', active: false },
+        });
+        const product = await client.product.create({
+          data: {
+            name: 'Preserved product',
+            nameKey: 'preserved product',
+            code: 'PRESERVED',
+            categoryId: category.id,
+            origin: 'BOTH',
+            active: false,
+            sellingPriceCents: 1399,
+            estimatedCostCents: 500,
+          },
+        });
+        registryLegacy = {
+          customerId: customer.id,
+          productId: product.id,
+          categoryId: category.id,
+          marketingId: marketing.id,
+        };
+      }
     }
   }
   migrate(url.toString());
-  return { connection, client, url: url.toString(), legacy };
+  return { connection, client, url: url.toString(), legacy, registryLegacy };
 }

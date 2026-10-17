@@ -37,7 +37,7 @@ const savedCategorySchema = z.object({ category: categoryDtoSchema });
 const savedProductSchema = z.object({ product: productDtoSchema });
 const moneyInput = (value: number) =>
   `${Math.trunc(value / 100)},${String(value % 100).padStart(2, '0')}`;
-function CategoryChoice({
+export function CategoryChoice({
   value,
   onChange,
   required = false,
@@ -118,8 +118,8 @@ export default function Catalog({ current }: { current: CurrentUser }) {
         </Button>
       </div>
       <p className="info-note">
-        Cadastro por unidade inteira. Estoque, produção, reservas e disponibilidade física ainda não
-        estão implementados.
+        Cadastro por unidade inteira. Consulte os lotes e a disponibilidade em Estoque. Vendas e
+        pedidos ainda não estão implementados.
       </p>
       {tab === 'products' ? <Products current={current} /> : <Categories current={current} />}
     </section>

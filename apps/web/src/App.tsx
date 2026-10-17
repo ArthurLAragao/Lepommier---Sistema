@@ -44,6 +44,8 @@ import {
 } from '@pommier/shared';
 import Customers from './registry/Customers.js';
 import Catalog from './registry/Catalog.js';
+import Inventory from './inventory/Inventory.js';
+import Production from './inventory/Production.js';
 import { AccountSettings } from './auth/AccountSettings.js';
 import { getSystemStatus, RequestError } from './api.js';
 import {
@@ -248,7 +250,10 @@ export default function App({
               .filter(
                 (module) =>
                   module.id !== 'settings' &&
-                  (module.id !== 'customers' || hasPermission(current.user.role, 'customers.read')),
+                  (module.id !== 'customers' ||
+                    hasPermission(current.user.role, 'customers.read')) &&
+                  (module.id !== 'production' ||
+                    hasPermission(current.user.role, 'production.manage')),
               )
               .map((module) => {
                 const Icon = icons[module.id];
@@ -324,9 +329,9 @@ export default function App({
               triggerIcon={<CircleHelp size={19} />}
             >
               <p>
-                Clientes e catálogo estão disponíveis conforme seu perfil. Vendas, estoque,
-                pagamentos e caixa ainda não estão habilitados. Não há dados fictícios apresentados
-                como registros reais.
+                Clientes, catálogo, produção e estoque de produtos prontos estão disponíveis
+                conforme seu perfil. Vendas, pagamentos e caixa ainda não estão habilitados. Não há
+                dados fictícios apresentados como registros reais.
               </p>
               <p>
                 A identidade visual é provisória. A conexão local é verificada pelo aplicativo;
@@ -403,6 +408,17 @@ export default function App({
             )
           ) : active === 'products' ? (
             <Catalog current={current} />
+          ) : active === 'inventory' ? (
+            <Inventory current={current} />
+          ) : active === 'production' ? (
+            hasPermission(current.user.role, 'production.manage') ? (
+              <Production current={current} />
+            ) : (
+              <EmptyState
+                title="Acesso restrito"
+                description="Seu perfil não administra produção."
+              />
+            )
           ) : active === 'overview' ? (
             <>
               <section className="welcome-panel" aria-labelledby="welcome-title">
@@ -541,12 +557,12 @@ export default function App({
                       <span className="step-index">4</span>
                       <div>
                         <strong>Cadastrar produtos e estoque inicial</strong>
-                        <span>Disponível após os módulos de cadastro e estoque.</span>
+                        <span>Use Catálogo e Estoque conforme as permissões do seu perfil.</span>
                       </div>
                       <LockKeyhole
                         size={15}
                         className="muted-icon"
-                        aria-label="Ainda não disponível"
+                        aria-label="Disponível conforme o perfil"
                       />
                     </li>
                   </ol>
@@ -562,12 +578,12 @@ export default function App({
                   </div>
                   <EmptyState
                     title="Sua rotina aparecerá aqui"
-                    description="Vendas, retiradas e produção serão exibidas quando os módulos estiverem disponíveis."
+                    description="O painel consolidado será disponibilizado com os módulos de vendas e pedidos. Consulte Produção e Estoque para os registros atuais."
                     icon={<Store size={28} strokeWidth={1.2} />}
                   />
                   <div className="activity-note">
                     <ShieldCheck size={16} aria-hidden="true" />
-                    <span>Nenhuma operação de loja foi registrada.</span>
+                    <span>Painel consolidado de operações ainda não disponível.</span>
                   </div>
                 </Card>
               </div>
@@ -683,7 +699,7 @@ function SettingsPage({
         <div className="info-note">
           <ShieldCheck size={19} aria-hidden="true" />
           <p>
-            Clientes e catálogo já estão disponíveis conforme seu perfil. Vendas, estoque,
+            Clientes, catálogo, produção e estoque já estão disponíveis conforme seu perfil. Vendas,
             pagamentos e caixa dependem das próximas etapas de implementação.
           </p>
         </div>

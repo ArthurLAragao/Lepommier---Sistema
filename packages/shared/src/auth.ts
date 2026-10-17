@@ -23,7 +23,31 @@ export type Permission =
   | 'customers.anonymize'
   | 'catalog.read'
   | 'catalog.manage'
-  | 'catalog.cost';
+  | 'catalog.cost'
+  | 'inventory.availability'
+  | 'inventory.read'
+  | 'inventory.opening'
+  | 'inventory.receive'
+  | 'inventory.waste'
+  | 'inventory.adjust'
+  | 'inventory.cost'
+  | 'inventory.reconcile'
+  | 'inventory.reservations'
+  | 'inventory.operations'
+  | 'production.manage';
+const inventoryManagement: Permission[] = [
+  'inventory.availability',
+  'inventory.read',
+  'inventory.opening',
+  'inventory.receive',
+  'inventory.waste',
+  'inventory.adjust',
+  'inventory.cost',
+  'inventory.reconcile',
+  'inventory.reservations',
+  'inventory.operations',
+  'production.manage',
+];
 const customerBasic: Permission[] = ['customers.read', 'customers.write'];
 const customerManagement: Permission[] = [
   ...customerBasic,
@@ -32,6 +56,7 @@ const customerManagement: Permission[] = [
 ];
 const permissions: Record<Role, readonly Permission[]> = {
   OWNER: [
+    ...inventoryManagement,
     'profile.self',
     'accounts.manage',
     'security.review',
@@ -46,14 +71,23 @@ const permissions: Record<Role, readonly Permission[]> = {
     'catalog.cost',
   ],
   MANAGER: [
+    ...inventoryManagement,
     'profile.self',
     ...customerManagement,
     'catalog.read',
     'catalog.manage',
     'catalog.cost',
   ],
-  CASHIER: ['profile.self', ...customerBasic, 'catalog.read'],
-  PRODUCTION: ['profile.self', 'catalog.read'],
+  CASHIER: ['profile.self', ...customerBasic, 'catalog.read', 'inventory.availability'],
+  PRODUCTION: [
+    'profile.self',
+    'catalog.read',
+    'inventory.availability',
+    'inventory.read',
+    'inventory.waste',
+    'inventory.operations',
+    'production.manage',
+  ],
 };
 export const hasPermission = (role: Role, permission: Permission): boolean =>
   permissions[role].includes(permission);

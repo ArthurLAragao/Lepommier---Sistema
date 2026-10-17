@@ -436,8 +436,12 @@ test('CSV Escape cancellation keeps the dialog controlled until the server cance
   await page.getByLabel('Nome (obrigatório)', { exact: true }).selectOption('nome');
   await page.getByRole('button', { name: 'Gerar prévia para revisão' }).click();
   await expect(
-    page.getByText('Cliente Sintético Cancelado', { exact: false }).first(),
+    page
+      .getByRole('table', { name: 'Revisão da importação' })
+      .getByText('Cliente Sintético Cancelado', { exact: false })
+      .first(),
   ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cancelar e fechar', exact: true })).toBeEnabled();
   const cancellation = page.waitForResponse(
     (response) => response.url().endsWith('/cancel') && response.request().method() === 'POST',
   );

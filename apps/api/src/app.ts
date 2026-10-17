@@ -6,6 +6,7 @@ import cookie from '@fastify/cookie';
 import { AuthService } from './auth/service.js';
 import { registerAuthRoutes } from './auth/routes.js';
 import { registerRegistryRoutes } from './registry/routes.js';
+import { registerInventoryRoutes } from './inventory/routes.js';
 import {
   APP_VERSION,
   BUSINESS_TIMEZONE,
@@ -83,6 +84,7 @@ export async function buildApp(options: AppOptions) {
         apiHost: options.apiHost ?? '127.0.0.1:3333',
       });
       await registerRegistryRoutes(authApp, auth, clock);
+      await registerInventoryRoutes(authApp, auth, clock);
     },
     { prefix: '/api' },
   );
@@ -119,7 +121,7 @@ export async function buildApp(options: AppOptions) {
     const now = clock();
     return systemStatusSchema.parse({
       version: APP_VERSION,
-      phase: 3,
+      phase: 4,
       businessTimezone: BUSINESS_TIMEZONE,
       businessDate: businessDateOf(now),
       timestamp: now.toISOString(),

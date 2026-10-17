@@ -11,7 +11,9 @@ test('local shell, real API connection and honest unavailable modules', async ({
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Visão geral', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Verificar conexão' })).toBeEnabled();
-  await expect(page.getByText('Nenhuma operação de loja foi registrada.')).toBeVisible();
+  await expect(
+    page.getByText('Painel consolidado de operações ainda não disponível.'),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Vendas Em breve', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Vendas ainda não está disponível' }),
@@ -28,8 +30,8 @@ test('settings search, filtering and pagination work', async ({ page }) => {
   const modules = page.locator('.module-card');
   await modules.getByRole('button', { name: 'Próxima página' }).click();
   await expect(page.getByText('Página 2 de 2')).toBeVisible();
-  await page.getByRole('searchbox', { name: 'Buscar módulo' }).fill('produção');
-  await expect(modules.getByRole('cell', { name: 'Produção', exact: true })).toBeVisible();
+  await page.getByRole('searchbox', { name: 'Buscar módulo' }).fill('vendas');
+  await expect(modules.getByRole('cell', { name: 'Vendas', exact: true })).toBeVisible();
   await page.getByRole('combobox', { name: 'Disponibilidade' }).selectOption('available');
   await expect(page.getByRole('heading', { name: 'Nenhum módulo encontrado' })).toBeVisible();
 });

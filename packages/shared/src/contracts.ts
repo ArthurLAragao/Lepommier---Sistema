@@ -64,14 +64,14 @@ export const modules = [
     id: 'production',
     label: 'Produção',
     phase: 4,
-    available: false,
+    available: true,
     description: 'Planejamento, conclusão da produção e recebimento por lote.',
   },
   {
     id: 'inventory',
     label: 'Estoque',
     phase: 4,
-    available: false,
+    available: true,
     description: 'Entradas, reservas, perdas e movimentações rastreáveis.',
   },
   {
@@ -111,7 +111,7 @@ export type DatabaseStatus = z.infer<typeof databaseStatusSchema>;
 
 export const systemStatusSchema = z.object({
   version: z.string(),
-  phase: z.literal(3),
+  phase: z.literal(4),
   businessTimezone: z.literal(BUSINESS_TIMEZONE),
   businessDate: businessDateSchema,
   timestamp: z.iso.datetime(),

@@ -1583,6 +1583,33 @@ td strong {
   gap: 1.25rem;
   min-width: 0;
 }
+.stock-fieldset {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  min-width: 0;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid #d9ded1;
+  border-radius: 6px;
+}
+.stock-fieldset legend {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0 0.3rem;
+}
+.stock-fieldset .search,
+.stock-fieldset .filter {
+  width: 100%;
+  min-width: 0;
+}
+.stock-fieldset:disabled {
+  opacity: 0.8;
+}
+.registry-table details p {
+  max-width: 280px;
+  overflow-wrap: anywhere;
+}
 .registry-toolbar {
   display: flex;
   align-items: center;

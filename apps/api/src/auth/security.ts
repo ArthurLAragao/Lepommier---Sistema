@@ -64,6 +64,13 @@ export function safeAuditMetadata(
     'previousState',
     'created',
     'skipped',
+    'quantity',
+    'before',
+    'after',
+    'batchId',
+    'movementId',
+    'shortfall',
+    'direction',
   ]) {
     const value = input[key];
     if (typeof value === 'string') safe[key] = value.slice(0, 200);

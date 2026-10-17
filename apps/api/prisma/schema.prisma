@@ -29,19 +29,25 @@ model InstallationState {
 }
 
 model User {
-  id              String                     @id @default(uuid()) @db.Uuid
-  loginIdentifier String                     @unique @db.VarChar(32)
-  displayName     String                     @db.VarChar(80)
-  passwordHash    String
-  role            Role
-  active          Boolean                    @default(true)
-  version         Int                        @default(1)
-  createdAt       DateTime                   @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime                   @updatedAt @db.Timestamptz(3)
-  sessions        Session[]
-  auditEvents     AuditEvent[]
-  marketingEvents MarketingPreferenceEvent[]
-  importJobs      ImportJob[]
+  id                    String                     @id @default(uuid()) @db.Uuid
+  loginIdentifier       String                     @unique @db.VarChar(32)
+  displayName           String                     @db.VarChar(80)
+  passwordHash          String
+  role                  Role
+  active                Boolean                    @default(true)
+  version               Int                        @default(1)
+  createdAt             DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime                   @updatedAt @db.Timestamptz(3)
+  sessions              Session[]
+  auditEvents           AuditEvent[]
+  marketingEvents       MarketingPreferenceEvent[]
+  importJobs            ImportJob[]
+  inventoryOperations   InventoryOperation[]
+  inventoryBatches      Batch[]
+  productionRecords     ProductionRecord[]
+  purchasedReceipts     PurchasedProductReceipt[]
+  inventoryMovements    InventoryMovement[]
+  inventoryReservations InventoryReservation[]
 }
 
 model Session {
@@ -151,26 +157,210 @@ model Category {
 }
 
 model Product {
-  id                  String        @id @default(uuid()) @db.Uuid
-  code                String        @unique @db.VarChar(32)
-  name                String        @db.VarChar(120)
-  nameKey             String        @db.VarChar(240)
-  categoryId          String        @db.Uuid
-  category            Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  description         String?       @db.VarChar(1000)
+  id                  String                    @id @default(uuid()) @db.Uuid
+  code                String                    @unique @db.VarChar(32)
+  name                String                    @db.VarChar(120)
+  nameKey             String                    @db.VarChar(240)
+  categoryId          String                    @db.Uuid
+  category            Category                  @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  description         String?                   @db.VarChar(1000)
   origin              ProductOrigin
   sellingPriceCents   Int
   estimatedCostCents  Int?
-  active              Boolean       @default(true)
-  storageInstructions String?       @db.VarChar(500)
-  shelfLifeReference  String?       @db.VarChar(300)
-  createdAt           DateTime      @default(now()) @db.Timestamptz(3)
-  updatedAt           DateTime      @updatedAt @db.Timestamptz(3)
-  version             Int           @default(1)
+  active              Boolean                   @default(true)
+  storageInstructions String?                   @db.VarChar(500)
+  shelfLifeReference  String?                   @db.VarChar(300)
+  createdAt           DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime                  @updatedAt @db.Timestamptz(3)
+  version             Int                       @default(1)
+  batches             Batch[]
+  productionRecords   ProductionRecord[]
+  purchasedReceipts   PurchasedProductReceipt[]
+  movements           InventoryMovement[]
+  reservations        InventoryReservation[]
+  allocations         ReservationAllocation[]
 
   @@index([categoryId, active])
   @@index([nameKey, id])
   @@index([active, origin])
+}
+
+enum BatchSource {
+  OPENING
+  PRODUCTION
+  PURCHASED
+  ADJUSTMENT
+}
+
+enum ProductionStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MovementType {
+  OPENING
+  PRODUCTION_RECEIPT
+  PURCHASED_RECEIPT
+  CONSUMPTION
+  WASTE
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+}
+
+enum ReservationStatus {
+  ACTIVE
+  RELEASED
+  CONSUMED
+}
+
+model InventoryOperation {
+  id            String              @id @default(uuid()) @db.Uuid
+  actorId       String              @db.Uuid
+  actor         User                @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  key           String              @db.Uuid
+  kind          String              @db.VarChar(32)
+  requestDigest String              @db.Char(64)
+  result        Json?
+  createdAt     DateTime            @default(now()) @db.Timestamptz(3)
+  completedAt   DateTime?           @db.Timestamptz(3)
+  movements     InventoryMovement[]
+
+  @@unique([actorId, key])
+  @@index([createdAt])
+}
+
+model Batch {
+  id                  String                   @id @default(uuid()) @db.Uuid
+  number              Int                      @unique @default(autoincrement())
+  productId           String                   @db.Uuid
+  product             Product                  @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reference           String                   @db.VarChar(80)
+  referenceKey        String                   @db.VarChar(160)
+  source              BatchSource
+  recordedAt          DateTime                 @db.Timestamptz(3)
+  expiresAt           DateTime?                @db.Date
+  expiryUnknownReason String?                  @db.VarChar(32)
+  actorId             String                   @db.Uuid
+  actor               User                     @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  notes               String?                  @db.VarChar(500)
+  physical            BigInt                   @default(0)
+  reserved            BigInt                   @default(0)
+  version             Int                      @default(1)
+  movements           InventoryMovement[]
+  allocations         ReservationAllocation[]
+  production          ProductionRecord?
+  receipt             PurchasedProductReceipt?
+
+  @@unique([id, productId])
+  @@unique([productId, referenceKey])
+  @@index([productId, expiresAt, recordedAt, id])
+}
+
+model ProductionRecord {
+  id              String           @id @default(uuid()) @db.Uuid
+  productId       String           @db.Uuid
+  product         Product          @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  actorId         String           @db.Uuid
+  actor           User             @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  status          ProductionStatus @default(PLANNED)
+  plannedQuantity Int
+  actualQuantity  Int?
+  plannedDate     DateTime         @db.Date
+  notes           String?          @db.VarChar(500)
+  createdAt       DateTime         @db.Timestamptz(3)
+  startedAt       DateTime?        @db.Timestamptz(3)
+  completedAt     DateTime?        @db.Timestamptz(3)
+  cancelledAt     DateTime?        @db.Timestamptz(3)
+  cancelReason    String?          @db.VarChar(32)
+  version         Int              @default(1)
+  batchId         String?          @unique @db.Uuid
+  batch           Batch?           @relation(fields: [batchId, productId], references: [id, productId], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([batchId, productId])
+  @@index([status, plannedDate, id])
+  @@index([productId, plannedDate])
+}
+
+model PurchasedProductReceipt {
+  id                String   @id @default(uuid()) @db.Uuid
+  productId         String   @db.Uuid
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  batchId           String   @unique @db.Uuid
+  batch             Batch    @relation(fields: [batchId, productId], references: [id, productId], onDelete: Restrict, onUpdate: NoAction)
+  quantity          Int
+  supplierReference String   @db.VarChar(120)
+  supplierBatch     String?  @db.VarChar(80)
+  unitCostCents     Int?
+  recordedAt        DateTime @db.Timestamptz(3)
+  actorId           String   @db.Uuid
+  actor             User     @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  notes             String?  @db.VarChar(500)
+
+  @@unique([batchId, productId])
+  @@index([productId, recordedAt])
+}
+
+model InventoryReservation {
+  id                 String                  @id @default(uuid()) @db.Uuid
+  productId          String                  @db.Uuid
+  product            Product                 @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  quantity           Int
+  sourceNamespace    String                  @db.VarChar(24)
+  sourceReference    String                  @db.Uuid
+  eligibilityThrough DateTime                @db.Date
+  actorId            String                  @db.Uuid
+  actor              User                    @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  status             ReservationStatus       @default(ACTIVE)
+  version            Int                     @default(1)
+  createdAt          DateTime                @db.Timestamptz(3)
+  closedAt           DateTime?               @db.Timestamptz(3)
+  allocations        ReservationAllocation[]
+
+  @@unique([id, productId])
+  @@unique([sourceNamespace, sourceReference, productId])
+  @@index([status, productId])
+}
+
+model ReservationAllocation {
+  id            String               @id @default(uuid()) @db.Uuid
+  productId     String               @db.Uuid
+  product       Product              @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reservationId String               @db.Uuid
+  reservation   InventoryReservation @relation(fields: [reservationId, productId], references: [id, productId], onDelete: Restrict, onUpdate: NoAction)
+  batchId       String               @db.Uuid
+  batch         Batch                @relation(fields: [batchId, productId], references: [id, productId], onDelete: Restrict, onUpdate: NoAction)
+  allocated     Int
+  released      Int                  @default(0)
+  consumed      Int                  @default(0)
+
+  @@unique([reservationId, batchId])
+  @@index([batchId])
+}
+
+model InventoryMovement {
+  id                 String              @id @default(uuid()) @db.Uuid
+  productId          String              @db.Uuid
+  product            Product             @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  batchId            String              @db.Uuid
+  batch              Batch               @relation(fields: [batchId, productId], references: [id, productId], onDelete: Restrict, onUpdate: NoAction)
+  operationId        String              @db.Uuid
+  operation          InventoryOperation  @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  actorId            String              @db.Uuid
+  actor              User                @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  type               MovementType
+  quantity           Int
+  reason             String              @db.VarChar(32)
+  notes              String?             @db.VarChar(500)
+  createdAt          DateTime            @db.Timestamptz(3)
+  correctsMovementId String?             @db.Uuid
+  correctsMovement   InventoryMovement?  @relation("MovementCorrection", fields: [correctsMovementId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  corrections        InventoryMovement[] @relation("MovementCorrection")
+
+  @@unique([operationId, batchId, type])
+  @@index([productId, createdAt, id])
+  @@index([batchId, createdAt, id])
 }
 
 model ImportJob {
