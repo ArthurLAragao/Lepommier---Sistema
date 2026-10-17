@@ -1,12 +1,12 @@
 # Acesso local e administração da equipe
 
-Este guia cobre a Fase 2. Clientes, produtos, estoque, vendas, pagamentos e caixa ainda não estão disponíveis. Não use esta versão para operar a loja.
+Este guia cobre acesso e contas. Clientes e catálogo têm guia próprio; produção e estoque de unidades prontas estão descritos em INVENTORY_OPERATOR_GUIDE.pt-BR.md. Vendas, pedidos, pagamentos e caixa ainda não estão disponíveis. Não use esta versão como sistema completo de operação da loja.
 
 ## Preparar o primeiro acesso
 
 1. O responsável técnico deve usar Node 24, instalar as dependências travadas, configurar o PostgreSQL local e guardar as credenciais do banco em `.env`, fora do Git. O banco deve estar em execução.
 2. Se estiver atualizando uma instalação, faça uma cópia verificável do banco pelo procedimento de manutenção existente. A ferramenta automática de backup/restauração ainda depende da Fase 8. Não apague registros, volumes ou migrações.
-3. Execute `npm run db:generate`, `npm run db:validate` e `npm run db:migrate`. As duas migrações são aplicadas na ordem; a migração original é preservada.
+3. Execute `npm run db:generate`, `npm run db:validate` e `npm run db:migrate`. As quatro migrações são aplicadas na ordem; as migrações anteriores são preservadas.
 4. Execute `npm run setup:secret`. O comando cria uma chave aleatória no arquivo privado `data/installation-secret`, sem mostrar seu conteúdo. Um arquivo existente nunca é substituído. Se `INSTALLATION_SECRET_FILE` estiver configurado, esse será o local utilizado.
 5. Restrinja o acesso à pasta e ao arquivo à conta do Windows que instala/executa o sistema. O modo de arquivo solicitado pelo programa não substitui as permissões ACL do Windows. Não deixe a chave em pasta compartilhada, controle de versão, capturas de tela, histórico de comandos ou logs.
 6. Inicie o aplicativo **depois** de criar a chave. Para desenvolvimento, `npm run dev` e `http://127.0.0.1:5173`. Para conferir os arquivos compilados, `npm run build`, `npm start` e `http://127.0.0.1:3333`.

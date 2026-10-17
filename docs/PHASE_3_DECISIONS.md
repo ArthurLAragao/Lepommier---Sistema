@@ -1,5 +1,7 @@
 # Phase 3 decisions
 
+Historical Phase 3 checkpoint at `af7a819`. Inventory/production were added afterward in PHASE_4_DECISIONS.md; the scope statements below describe what Phase 3 itself introduced.
+
 Scope: customer registry, marketing preference provenance, category/product catalog and deliberate customer CSV workflows. No stock, reservations, production, orders, sales, payments, cash, credit or promotional delivery is implemented. No real customer file was supplied or imported. The starting point was the inspected Phase 2 commit `721d303`, not a rebuilt application.
 
 ## Data and validation

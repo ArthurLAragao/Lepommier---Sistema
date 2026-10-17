@@ -1,6 +1,6 @@
 # Permission matrix
 
-The API enforces Phase 2 identity and Phase 3 registry permissions below. The remaining operational matrix specifies later modules; it does not claim those modules exist. A hidden/disabled UI control is not authorization. No default production credentials.
+The API enforces Phase 2 identity, Phase 3 registry and Phase 4 inventory permissions below. The remaining operational matrix specifies later modules; it does not claim those modules exist. A hidden/disabled UI control is not authorization. No default production credentials.
 
 ## Enforced in Phase 2
 
@@ -36,30 +36,48 @@ This resolves the former “restricted manager CPF” ambiguity as **no manager 
 
 Every registry service reauthorizes the actor/session inside the existing database lock transaction. Revocation committed before lock acquisition prevents completion; a transaction holding the lock finishes before a later account change. Customer/category/product versions reject stale edits. Registry mutations preserve exact Origin/Host and the existing CSRF model. No customer/catalog delete endpoint exists. See PHASE_3_DECISIONS.md, CUSTOMER_PRIVACY.md and REGISTRY_OPERATOR_GUIDE.pt-BR.md.
 
-## Remaining operational matrix for Phases 4–9
+## Enforced in Phase 4
 
-| Capability                       | OWNER | MANAGER                         | CASHIER             | PRODUCTION      |
-| -------------------------------- | ----- | ------------------------------- | ------------------- | --------------- |
-| Operational dashboard            | Yes   | Yes                             | Limited             | Production only |
-| POS and pickup orders            | Yes   | Yes                             | Yes                 | No              |
-| Necessary customer name/phone    | Yes   | Yes                             | Yes                 | No              |
-| Sensitive CPF/private fields     | Yes   | Restricted                      | No                  | No              |
-| Customer exports/imports         | Yes   | No by default                   | No                  | No              |
-| Customer anonymization           | Yes   | No                              | No                  | No              |
-| Products/categories/prices       | Yes   | Yes                             | Read active         | Read relevant   |
-| Discount with reason             | Yes   | Yes                             | No                  | No              |
-| Production and batch receipts    | Yes   | Yes                             | No                  | Yes             |
-| Waste in permitted batches       | Yes   | Yes                             | No                  | Yes             |
-| Stock adjustment/eligible return | Yes   | Yes, with reason                | No                  | No              |
-| Record one full payment          | Yes   | Yes                             | Assigned session    | No              |
-| Approve full refund              | Yes   | No by default                   | No                  | No              |
-| Open/operate/close cash          | Yes   | Yes                             | Assigned session    | No              |
-| Cash closing review              | Yes   | Yes                             | Own session summary | No              |
-| Traceable cash correction        | Yes   | Yes, with reason                | No                  | No              |
-| Business reports/export          | Yes   | Yes, excluding customer exports | No                  | Production only |
-| Users/roles/settings             | Yes   | No                              | No                  | No              |
-| Backup administration            | Yes   | No                              | No                  | No              |
-| Audit/security review            | Yes   | No by default                   | No                  | No              |
+| Named permission       | OWNER                                               | MANAGER                 | CASHIER                                    | PRODUCTION                     |
+| ---------------------- | --------------------------------------------------- | ----------------------- | ------------------------------------------ | ------------------------------ |
+| inventory.availability | All permitted scopes                                | Same                    | Active sellable identity/availability only | Relevant stock                 |
+| inventory.read         | Detailed physical/reserved/blocked, batches/history | Same                    | No                                         | Yes                            |
+| production.manage      | Plan/start/complete/cancel/list                     | Same                    | No                                         | Yes                            |
+| inventory.opening      | Yes                                                 | Yes                     | No                                         | No                             |
+| inventory.receive      | Yes                                                 | Yes                     | No                                         | No                             |
+| inventory.waste        | All permitted batches                               | Same                    | No                                         | Production-source batches only |
+| inventory.adjust       | Reasoned/versioned IN/OUT                           | Same                    | No                                         | No                             |
+| inventory.cost         | Optional historical purchase unit cost              | Yes, explicitly granted | No                                         | No                             |
+| inventory.reconcile    | Read-only diagnostics                               | Same                    | No                                         | No                             |
+| inventory.operations   | Actor-owned, current kind permission                | Same                    | No                                         | Permitted own commands         |
+| inventory.reservations | Internal domain service only                        | Same                    | No                                         | No                             |
+
+This explicitly narrows the former future “production and batch receipts” wording: production employees receive units only through production completion, never purchased receipts/opening/adjustments. Their waste scope is checked on the backend batch source. MANAGER cost visibility is an explicit extension consistent with existing catalog.cost; it is omitted from CASHIER/PRODUCTION database selects and DTOs. CASHIER cannot request inactive scopes or detailed batch/history/production paths. No inventory endpoint contains customer PII. Restricted roles cannot submit hidden costs or manipulate mutation routes.
+
+All services recheck current actor/session and permission under the shared security lock. Stock mutation, audit and operation result commit atomically. Cost fields are omitted rather than frontend hidden. Reservation allocation/release/consumption has no arbitrary HTTP mutation route; Phase 5 must validate a real business source and design cashier order permissions without granting unrestricted inventory consumption. See PHASE_4_DECISIONS.md and RESERVATION_CONTRACT.md.
+
+## Remaining operational matrix for Phases 5-9
+
+| Capability                    | OWNER | MANAGER                         | CASHIER             | PRODUCTION      |
+| ----------------------------- | ----- | ------------------------------- | ------------------- | --------------- |
+| Operational dashboard         | Yes   | Yes                             | Limited             | Production only |
+| POS and pickup orders         | Yes   | Yes                             | Yes                 | No              |
+| Necessary customer name/phone | Yes   | Yes                             | Yes                 | No              |
+| Sensitive CPF/private fields  | Yes   | Restricted                      | No                  | No              |
+| Customer exports/imports      | Yes   | No by default                   | No                  | No              |
+| Customer anonymization        | Yes   | No                              | No                  | No              |
+| Products/categories/prices    | Yes   | Yes                             | Read active         | Read relevant   |
+| Discount with reason          | Yes   | Yes                             | No                  | No              |
+| Eligible return decision      | Yes   | Yes, with reason                | No                  | No              |
+| Record one full payment       | Yes   | Yes                             | Assigned session    | No              |
+| Approve full refund           | Yes   | No by default                   | No                  | No              |
+| Open/operate/close cash       | Yes   | Yes                             | Assigned session    | No              |
+| Cash closing review           | Yes   | Yes                             | Own session summary | No              |
+| Traceable cash correction     | Yes   | Yes, with reason                | No                  | No              |
+| Business reports/export       | Yes   | Yes, excluding customer exports | No                  | Production only |
+| Users/roles/settings          | Yes   | No                              | No                  | No              |
+| Backup administration         | Yes   | No                              | No                  | No              |
+| Audit/security review         | Yes   | No by default                   | No                  | No              |
 
 ## Session/setup controls implemented
 

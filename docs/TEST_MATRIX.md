@@ -1,6 +1,6 @@
 # Required scenario matrix
 
-Status describes implemented evidence, not intentions. Most scenarios depend on modules intentionally unavailable in the current foundation.
+Status describes executed evidence, not intentions. Phases 0–4 are covered below; sales/payment/cash and later release scenarios remain intentionally unavailable. Current command results and gate status are in PROGRESS.md.
 
 ## Phase 2 acceptance evidence
 
@@ -52,7 +52,28 @@ The registry tests run on real isolated PostgreSQL; helper/browser evidence is i
 | Browser roles/catalog/CSV                              | Restricted customer fields/actions and cost; category/product form/edit/status/price, search/filter/page; template/map/row choices/import result, lost response retry, Escape cancellation, explicit export |
 | Browser usability/regressions                          | 1366×768 and 390×844, contained table scrolling, keyboard/dialog focus/Escape, reduced motion, relevant Axe; all foundation/identity tests preserved                                                        |
 
-## Operational release scenarios still pending
+## Phase 4 inventory/production evidence
+
+| Required cases                                | Evidence                                                                                                                                                                                                                    |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1–2 opening/duplicate retry                   | Traceable batch/ledger/server time, concurrent identity reuse and unchanged physical total                                                                                                                                  |
+| 3–6 planning/actual/completion retry/rollback | Plan/start no stock; actual only, same-key race once; final audit failure rolls back source/batch/ledger/result                                                                                                             |
+| 7–9 origins/receipt/cost                      | Produced/purchased restrictions, concurrent receipt once, historical optional cost without catalog overwrite                                                                                                                |
+| 10–13 ledger/reserve/FEFO/unknown             | Ledger equals projections; reservation does not remove physical; spans batches; explicit unknown last                                                                                                                       |
+| 14–16 expiry/Fortaleza/final units            | Physical retained/blocked, injected-clock midnight/day-end, competing requests cannot overallocate                                                                                                                          |
+| 17–21 release/consume/race/expired/future     | Whole terminal actions idempotent, race one outcome, expired allocation remains/rejects consume, future date filters                                                                                                        |
+| 22–25 waste/adjustment/races                  | Unreserved bounds, explicit expired disposal, waste-allocation and adjustment-allocation preserve nonnegative state/versions                                                                                                |
+| 26–29 privacy/permissions/CSRF/revocation     | Cost omitted from restricted selects, cashier detailed paths denied, production waste scope, every mutation exact guards, revocation under lock                                                                             |
+| 30–31 idempotency/multi-product rollback      | Changed payload conflicts, actor-owned lookup; insufficient later line rolls back earlier allocation and operation                                                                                                          |
+| 32–34 SQL/history/reconciliation              | Bounds/composite identities/atomic result constraints, ledger and metadata immutability, privileged test-only drift diagnosed without repair                                                                                |
+| 35–38 product changes/upgrade/overflow/loss   | Concurrent deactivation/origin policy, foundation/identity/registry preserved, numeric/BigInt string totals, no phantom waste for shortfall/cancellation                                                                    |
+| Additional production/corrections/audit       | PRODUCTION positive lifecycle and permitted waste; explicit new-batch positive and compensating adjustment; no supplier/notes payload in audit/result                                                                       |
+| Unit                                          | Units, signs, eligibility/FEFO/BigInt, canonical equality, permissions, production state/shortfall, bounded transient classification                                                                                        |
+| Browser                                       | 13 new scenarios with lifecycle/details, opening validation/expiry, receipt/cost, waste/adjust/history, unknown expiry, stale review, committed response-loss retry/lookup, roles, filters/page, keyboard/dialog/layout/Axe |
+
+All 41 inventory scenarios execute against real isolated PostgreSQL, alongside 63 retained tests. Browser counts and final gate are recorded in PROGRESS.md, not inferred from this coverage map. Internal reservation tests do not certify real orders, payment prerequisites or cashier consumption.
+
+## Remaining operational release scenarios
 
 | #   | Required scenario                          | Current evidence                                                                                       |
 | --- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
@@ -61,15 +82,15 @@ The registry tests run on real isolated PostgreSQL; helper/browser evidence is i
 | 3   | WhatsApp order paid at pickup              | Pending Phase 5                                                                                        |
 | 4   | Unpaid handover rejected                   | Pending Phase 5                                                                                        |
 | 5   | Payment before pickup                      | Pending Phase 5                                                                                        |
-| 6   | Unpaid cancellation releases reservation   | Pending Phases 4/5                                                                                     |
+| 6   | Unpaid cancellation releases reservation   | Internal idempotent release verified; genuine order cancellation integration pending Phase 5           |
 | 7   | Paid unfulfilled refund/cancellation       | Pending Phases 5/6                                                                                     |
 | 8   | Fulfilled refund without automatic restock | Pending Phase 5                                                                                        |
 | 9   | Double-click sale idempotency              | Pending Phase 5                                                                                        |
-| 10  | Retried production completion              | Pending Phase 4                                                                                        |
-| 11  | Concurrent final-unit allocation           | Pending PostgreSQL concurrency tests in Phase 4                                                        |
-| 12  | Expired batch blocked                      | Pending Phase 4                                                                                        |
-| 13  | Excess waste rejected                      | Pending Phase 4                                                                                        |
-| 14  | Reserved-stock disposal rejected           | Pending Phase 4                                                                                        |
+| 10  | Retried production completion              | Verified Phase 4 PostgreSQL same-key concurrency and browser duplicate/uncertain-result flows          |
+| 11  | Concurrent final-unit allocation           | Verified Phase 4 real PostgreSQL; genuine order integration remains Phase 5                            |
+| 12  | Expired batch blocked                      | Verified Phase 4 controlled-clock PostgreSQL and browser labels                                        |
+| 13  | Excess waste rejected                      | Verified Phase 4 real PostgreSQL bounds/races and stale form                                           |
+| 14  | Reserved-stock disposal rejected           | Verified Phase 4 real PostgreSQL, no silent release                                                    |
 | 15  | Old order totals survive price changes     | Catalog repricing audited; order item snapshots/end-to-end preservation pending Phase 5                |
 | 16  | Unauthorized refund                        | Identity/authorization foundation implemented; refund endpoint and enforcement pending Phase 5         |
 | 17  | Unauthorized customer export               | Verified Phase 3 backend denial and role-aware UI; minimal owner-only export                           |

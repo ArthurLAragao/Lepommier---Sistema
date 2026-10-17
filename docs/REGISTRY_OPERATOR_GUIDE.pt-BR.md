@@ -1,6 +1,6 @@
 # Guia de clientes e catálogo — Fase 3
 
-Esta versão permite manter clientes e catálogo. **Ainda não controla estoque, produção, vendas, pedidos, pagamentos, dívida de cliente ou fechamento de caixa.** Não use os cadastros como comprovação de disponibilidade ou de histórico de compras. Instalação/acesso/recuperação de senha continuam no ACCESS_OPERATOR_GUIDE.pt-BR.md.
+Este guia cobre clientes e catálogo. Produção e estoque de unidades prontas estão descritos em INVENTORY_OPERATOR_GUIDE.pt-BR.md. **Vendas, pedidos, pagamentos, dívida de cliente e fechamento de caixa ainda não estão implementados.** Consulte o estoque separado antes de afirmar disponibilidade; o cadastro sozinho não comprova saldo ou histórico de compras. Instalação/acesso/recuperação de senha continuam no ACCESS_OPERATOR_GUIDE.pt-BR.md.
 
 ## Clientes
 
@@ -32,7 +32,7 @@ Proprietário/gerente administram em Produtos → Categorias. Crie categoria ant
 
 Em Produtos → **Novo produto**, informe código único, nome, categoria ativa, origem e preço por unidade inteira. O código vira maiúsculo e aceita letras A–Z, números, ponto, hífen e sublinhado, 2–32 caracteres. Preço/custo usam reais na tela e centavos inteiros no banco. Zero exige confirmação explícita; negativo/fração de centavo é erro. Custo estimado é opcional, visível só ao proprietário/gerente e não calcula lucro real. Armazenamento e validade são referências textuais, sem cálculo automático ou garantia de segurança alimentar.
 
-Use busca, filtros de categoria/origem/situação, ordenação e páginas de 20. Abra produto para consultar e editar. Desative marcando a situação no formulário e salvando com o motivo de alteração de preço quando necessário. Caixa/produção consultam apenas catálogo ativo, sem custo ou botões de edição. Não há upload de foto; o marcador neutro é intencional. Não há quantidade/disponibilidade de estoque.
+Use busca, filtros de categoria/origem/situação, ordenação e páginas de 20. Abra produto para consultar e editar. Desative marcando a situação no formulário e salvando com o motivo de alteração de preço quando necessário. Caixa/produção consultam apenas catálogo ativo, sem custo ou botões de edição. Não há upload de foto; o marcador neutro é intencional. Quantidades e disponibilidade são consultadas no módulo Estoque, não editadas no catálogo.
 
 Conflito de edição exige recarregar/revisar, como em clientes. Alterações de preço/custo registram responsável/data na auditoria. Preservar preços de vendas antigas será responsabilidade dos itens de pedido na fase de vendas, ainda não implementada.
 

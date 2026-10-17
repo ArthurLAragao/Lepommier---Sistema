@@ -33,17 +33,23 @@ RegistryService uses explicit role-specific database selects and the existing tr
 
 Current marketing state lives on Customer rather than a separate singleton preference table; history is separate. Anonymization scrubs optional evidence references while retaining non-identifying event provenance; it does not alter append-only AuditEvent. There are no PII audit snapshots. Category deactivation retains products and their flags. Prices/cost are integer centavos; future order items must snapshot prices. No stock fields, photo upload or fabricated availability are present.
 
-## Future operational database design (not implemented)
+## Implemented Phase 4 inventory and production
 
-| Entity                                             | Relationships and safeguards                                                                                    |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| ProductionRecord / PurchasedProductReceipt / Batch | Batch product identity, optional expiry, completion source unique, actual quantity and responsible user         |
-| InventoryMovement / InventoryReservation           | Signed ledger delta; source uniqueness; reservation state and allocated batch; responsible user/reason          |
-| Order / OrderItem                                  | Source and state, separate payment state, immutable snapshots after confirmation, customer optional for counter |
-| Payment / Refund                                   | One successful full payment per order, unique full refund reference, actor and current cash session             |
-| CashSession / CashMovement                         | Partial unique index for single active session, append-only money movement, preserved closing snapshot          |
-| Operational audit / IdempotencyRecord              | Reuse security audit conventions; actor/scope/key/request fingerprint/response binding                          |
-| StoreSettings expansion                            | Future operational defaults; current bounded ImportJob is already implemented in Phase 3                        |
+Additive `202610170004_inventory` introduces batches, immutable stock ledger, production, purchased finished receipts, internal reservations/allocations and actor-scoped InventoryOperation. BIGINT batch projections update with ledger/allocation writes; deferred SQL constraint triggers validate final aggregate agreement. Composite foreign keys preserve product identity. Aggregate transport is decimal strings/BigInt, not floating point. No existing migration is rewritten and no order/financial/ingredient table is added.
+
+InventoryService reuses the security singleton lock and current actor/session check, then operation identity, sorted product IDs, source row and sorted batches. All stock changes, safe audit and pointer-only idempotency result commit together. Bounded recognized serialization/deadlock retry uses the same request. Native dialogs preserve pending keys/payloads during uncertain responses and provide authenticated lookup. Original batch metadata/expiry and terminal production remain immutable; corrections append compensating movements.
+
+Production/Estoque screens use existing cream/green components, forms, tables, pagination and modal focus behavior. CASHIER sees active sellable availability only; PRODUCTION has production/relevant batches and production-batch waste, without purchase costs/customer information. No sales-linked reservation screen or arbitrary consumption route exists. Read-only reconciliation reports drift without repair. See PHASE_4_DECISIONS.md, INVENTORY_INVARIANTS.md and RESERVATION_CONTRACT.md for numeric/expiry/transaction/retention details.
+
+## Future operational database design (remaining modules)
+
+| Entity                        | Relationships and safeguards                                                                                    |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Order / OrderItem             | Source and state, separate payment state, immutable snapshots after confirmation, customer optional for counter |
+| Payment / Refund              | One successful full payment per order, unique full refund reference, actor and current cash session             |
+| CashSession / CashMovement    | Partial unique index for single active session, append-only money movement, preserved closing snapshot          |
+| Sales/cash operation identity | Extend existing atomic audit/idempotency conventions to genuine business ownership                              |
+| StoreSettings expansion       | Future operational defaults; current bounded ImportJob is already implemented in Phase 3                        |
 
 Use foreign keys with RESTRICT for financial/catalog references. Avoid destructive cascades of historical records. Use version numbers for mutable customer/catalog edits and reject stale versions.
 

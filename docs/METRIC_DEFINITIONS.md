@@ -1,5 +1,13 @@
 # Metric definitions
 
+Only current inventory/batch reconciliation and production lists are implemented in Phase 4. The sales/payment/customer/cash/dashboard metrics below specify future queries, not working financial reports. No zero revenue/profit figures substitute for missing modules. Receipt purchase cost is a restricted historical snapshot; no discarded-cost/retail-loss report is calculated in this phase.
+
+## Implemented inventory quantities
+
+Physical = signed ledger sum, including expired units not disposed. Reserved = sum(allocated − released − consumed). Available sellable = sum(physical − reserved) over batches eligible on Fortaleza today; future allocation additionally requires expiry through its requested date. Blocked = physical in expired batches. Expired reserved = outstanding allocations in expired batches, an overlapping exception subset. Do not sum blocked and reserved as disjoint categories. Expiry day itself is eligible; unknown-expiry batches require an explicit acknowledgement and sort last, without a food-safety guarantee.
+
+Production list reports planned and actual received quantities separately; only completed actual units enter stock. Yield shortfall = max(planned − actual, 0), without another stock deduction. Movement time is server recorded time; no backdated effective date is supported. Batch/product reconciliation compares immutable ledger sums, maintained projections and outstanding allocations, returns findings and never repairs automatically. Totals are decimal strings/BigInt with PostgreSQL numeric aggregates, avoiding int32/JavaScript precision loss. See INVENTORY_INVARIANTS.md. Historical sellable availability at arbitrary date X is not claimed.
+
 All daily ranges are **[00:00 of selected America/Fortaleza business date, 00:00 of following business date)**. Store timestamps as UTC instants. Browser timezone must not choose the report day. A refund uses its own recorded timestamp and does not rewrite the original fulfilled-sales day.
 
 | Metric                             | Definition                                                                                            |
