@@ -20,9 +20,9 @@
 | Expiry boundary         | Batch blocked after its entered expiry date in Fortaleza | Owner must approve day-end interpretation; no food-safety rule is inferred |
 | Stock allocation        | Earliest expiry then oldest receipt/ID                   | Stable FEFO, only eligible unreserved units                                |
 | Customer marketing      | UNKNOWN until explicitly recorded                        | Existing records imply no consent                                          |
-| Staff access            | Five active accounts initially                           | Owner included; validate before enforcement                                |
+| Staff access            | Five active accounts enforced initially                  | Owner included; review before pilot, never silently expand                 |
 | Network                 | Loopback only                                            | LAN requires a separately reviewed configuration                           |
-| Session duration        | Proposed 12 hours, non-sliding                           | Owner to validate shift duration/security                                  |
+| Session duration        | Enforced 12 absolute hours, one current session/account  | No inactivity extension; owner to validate against shifts before pilot     |
 | Backup retention        | Proposed 14 daily + 4 weekly copies                      | Capacity, privacy and separate-device process to validate                  |
 | Personal-data retention | No invented legal duration                               | Owner must approve documented retention and request handling               |
 
@@ -33,5 +33,9 @@ Foundation input guards currently accept business/report dates from 2000 through
 Existing customer spreadsheet columns, product catalog, prices, categories, suppliers, shelf lives, official brand assets, recipes, store address/contact information, real employee details and production quantities. No operational data is fabricated or silently imported.
 
 ## Environment findings
+
+Phase 2 inspection confirmed the existing strict monorepo, React/Vite, Fastify, shared Zod, Prisma 7 and preserved foundation migration. No stack change was made. The earlier architectural claim of a production DB container with no published port described a future plan; current Compose supplies development/test PostgreSQL only. Identity migration and real PostgreSQL security/browser tests now exist. No real employee/customer or operational records were supplied or invented. Synthetic accounts live only in isolated test databases.
+
+Documented Phase 2 policies: immutable normalized login names, Argon2id 19 MiB/two passes/one lane, two password jobs at once, exact local Origin plus non-simple CSRF header, no missing-Origin mutation exception, permanent installation closure, one current session per account, role/password/disable revocation and seven-day/bounded session cleanup. See PHASE_2_DECISIONS.md for reasoning. TLS/proxy/LAN, audit archival, platform-native binary portability and interactive operator usability need separate verification; none is assumed from automated tests.
 
 The provided workspace contained only empty `outputs/` and `work/` directories, with no Git repository, HTML/JavaScript registry or reusable brand asset. The prompt attachment is the only supplied source. Node 25.3.0 is on PATH; bundled Node 24.19.0 is available and selected for verification. Docker and psql were not found on PATH, and no Docker/PostgreSQL folder was found in Program Files. An absent command is not proof no installation exists elsewhere.

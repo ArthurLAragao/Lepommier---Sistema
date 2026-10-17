@@ -38,7 +38,10 @@ import {
   modules,
   type ModuleId,
   type SystemStatus,
+  type CurrentUser,
+  roleLabels,
 } from '@pommier/shared';
+import { AccountSettings } from './auth/AccountSettings.js';
 import { getSystemStatus, RequestError } from './api.js';
 import {
   Badge,
@@ -78,7 +81,19 @@ function initialModule(): ModuleId {
   return modules.find((module) => `#${module.id}` === window.location.hash)?.id ?? 'overview';
 }
 
-export default function App() {
+export default function App({
+  current,
+  onLogout,
+  loggingOut,
+  onRefreshCurrent,
+  onPasswordChanged,
+}: {
+  current: CurrentUser;
+  onLogout: () => void;
+  loggingOut: boolean;
+  onRefreshCurrent: () => void;
+  onPasswordChanged: () => void;
+}) {
   const [active, setActive] = useState<ModuleId>(initialModule);
   const [mobileNav, setMobileNav] = useState(false);
   const [status, setStatus] = useState<SystemStatus | null>(null);
@@ -175,7 +190,7 @@ export default function App() {
     requestAnimationFrame(() => headingRef.current?.focus());
   }
 
-  const current = modules.find((module) => module.id === active) ?? modules[0];
+  const currentModule = modules.find((module) => module.id === active) ?? modules[0];
   const databaseReady = status?.database.status === 'ready';
   const connectionLabel = error
     ? 'Sistema desconectado'
@@ -287,7 +302,7 @@ export default function App() {
             </button>
             <span className="breadcrumb-store">Minha loja</span>
             <ChevronRight size={14} aria-hidden="true" />
-            <span>{current.label}</span>
+            <span>{currentModule.label}</span>
           </div>
           <div className="topbar-right">
             <span className="top-date">
@@ -314,8 +329,14 @@ export default function App() {
               <span className="setup-avatar">
                 <LockKeyhole size={15} />
               </span>
-              Instalação inicial
+              <span>
+                <strong>{current.user.displayName}</strong>
+                <small className="current-role">{roleLabels[current.user.role]}</small>
+              </span>
             </span>
+            <Button variant="secondary" onClick={onLogout} busy={loggingOut}>
+              Sair
+            </Button>
           </div>
         </header>
         <main id="main-content" tabIndex={-1}>
@@ -329,16 +350,16 @@ export default function App() {
                     : 'EM DESENVOLVIMENTO'}
               </p>
               <h1 ref={headingRef} tabIndex={-1}>
-                {current.label}
+                {currentModule.label}
               </h1>
               <p className="page-description">
                 {active === 'overview'
                   ? 'Um lugar para cuidar da rotina e acompanhar sua loja.'
-                  : current.description}
+                  : currentModule.description}
               </p>
             </div>
             <div className="page-heading-action">
-              {current.available ? (
+              {currentModule.available ? (
                 <Button variant="secondary" busy={busy} onClick={() => startRefresh(true)}>
                   <RefreshCw size={16} aria-hidden="true" />
                   Verificar conexão
@@ -490,10 +511,10 @@ export default function App() {
                     <li>
                       <span className="step-index">3</span>
                       <div>
-                        <strong>Criar o acesso do responsável</strong>
-                        <span>Cadastro seguro disponível na próxima etapa.</span>
+                        <strong>Acesso individual configurado</strong>
+                        <span>Sua conta está autenticada no sistema local.</span>
                       </div>
-                      <span className="step-pending">Próxima fase</span>
+                      <Badge tone="success">Pronto</Badge>
                     </li>
                     <li>
                       <span className="step-index">4</span>
@@ -525,7 +546,7 @@ export default function App() {
                   />
                   <div className="activity-note">
                     <ShieldCheck size={16} aria-hidden="true" />
-                    <span>Nenhum registro real foi criado.</span>
+                    <span>Nenhuma operação de loja foi registrada.</span>
                   </div>
                 </Card>
               </div>
@@ -539,9 +560,16 @@ export default function App() {
               </div>
             </>
           ) : active === 'settings' ? (
-            <SettingsPage status={status} busy={busy} connectionLabel={connectionLabel} />
+            <>
+              <AccountSettings
+                current={current}
+                onRefreshCurrent={onRefreshCurrent}
+                onPasswordChanged={onPasswordChanged}
+              />
+              <SettingsPage status={status} busy={busy} connectionLabel={connectionLabel} />
+            </>
           ) : (
-            <UnavailablePage module={current} onSettings={() => navigate('settings')} />
+            <UnavailablePage module={currentModule} onSettings={() => navigate('settings')} />
           )}
 
           <footer className="page-footer">

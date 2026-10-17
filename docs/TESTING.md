@@ -1,52 +1,75 @@
-# Testing the foundation
+# Testing foundation and identity
 
-Use Node 24 LTS. `npm ci` installs exact locked dependencies. Generated Prisma and shared outputs are prepared automatically by the test/type-check/build scripts; generated files are not committed.
+Use Node 24 LTS and `npm ci`. Generated Prisma/shared outputs are prepared by hooks and are not committed. Do not run tests against store data, reset existing databases or disable failing checks. Test credentials are synthetic random values; no default production password exists.
 
-## Source and API checks
+## Source gate
 
 ```powershell
+npm run db:generate
+npm run db:validate
 npm run typecheck
 npm run lint
 npm run format:check
 npm test
-npm run db:validate
 npm run build
 ```
 
-The foundation unit/API suite covers strict integer money/units, CSV formula escaping, Fortaleza date boundaries, safe API errors, correlation IDs, readiness versus liveness, local-only binding, graceful resource cleanup and serving the actual production entrypoint. API contract tests inject a probe and do not prove PostgreSQL behavior.
+Pure tests cover the preserved money/date/CSV helpers plus login normalization, password Unicode/bounds, shared request validation, permission mapping, expiry calculation, loopback checks, safe audit filtering, native password budget/recovery and development/maintenance target guards. Injected Fastify tests cover safe Portuguese errors/correlation IDs, local binding, headers/CSP, health/readiness, resource cleanup and production entrypoint. Real PostgreSQL route tests cover Origin/CSRF. Pure tests alone do not prove PostgreSQL behavior.
 
-## Dedicated PostgreSQL tests
+On this Windows host the npm.cmd launcher selects host Node 25.3.0 regardless of PATH. The actual verification uses:
 
-1. Configure `.env` from `.env.example` with unique credentials.
-2. Set `TEST_DATABASE_URL` to a separate local database ending in `_test`. It must differ from `DATABASE_URL`.
-3. Start `docker compose --profile test up -d db-test`.
-4. Run `npm run db:migrate:test`.
-5. Run `npm run test:integration`.
-6. Stop the test service with `docker compose --profile test stop db-test`.
+```powershell
+$env:PATH = 'C:\Users\Ryzen\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin;' + $env:PATH
+& 'C:\Users\Ryzen\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' 'C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js' run typecheck
+```
 
-The test migration wrapper and integration suite reject an absent test URL, non-loopback host, a name without `_test`, or the exact operational URL. The current tests verify the real PostgreSQL server, Prisma access to the migrated foundation table and actual readiness through the API. They do not validate future stock, payment, cash, auth or backup behavior.
+The same explicit runtime/CLI runs the other npm commands. On another installation use its verified Node 24 executable; do not silently substitute a runtime.
 
-On this implementation host Docker was unavailable, so PostgreSQL 17.10 was run as a portable **real database process** inside the task's scratch directory, bound to `127.0.0.1:55437`, with random temporary credentials and a separate `le_pommier_test` database. It was stopped after verification. The portable package wrapper is a prerelease testing utility; it is not an application runtime dependency or a production database installation.
+## Real PostgreSQL integration
 
-## Browser acceptance
+1. Start an isolated local PostgreSQL instance. Development/test Compose configuration is supplied: `docker compose --profile test up -d db-test` when Docker is available. This host did **not** execute Docker.
+2. Configure TEST_DATABASE_URL to a separate local PostgreSQL DB ending in `_test`, distinct from DATABASE_URL. Target comparisons decode DB names and normalize default ports, so different credentials/loopback aliases do not bypass the same-target check. Test/development/recovery targets allow only an optional `schema=public` query; host/port override and other query options are refused. The test role needs CREATE DATABASE for fresh per-suite isolation. Do not give the production app unnecessary database-administration permissions.
+3. Run `npm run db:migrate:test`, then `npm run test:integration`.
+4. Stop the test instance afterward; retain/delete only explicitly reviewed disposable databases through a separate maintenance procedure. This suite never drops/resets the supplied database.
 
-Install the matching browser once with `npx playwright install chromium`, then run `npm run test:e2e`. The command builds production assets and starts/stops a fresh production server on loopback port 3333. Stop a manual preview first. The tests do not seed operational data.
+The tests create uniquely named `_test` databases and apply real migrations. The upgrade test first applies **only** the original foundation migration, inserts a marker, applies the identity migration and verifies preservation. Other tests apply both migrations cleanly. They exercise setup races/closure, direct-peer policy/forward-header spoofing, login/cookies/digests, logout/replacement/expiry, revocation, all four roles, password reset/change, every mutation's CSRF/origin guard, last-owner concurrency, stale versions, five-account concurrency, persistent identifier/source throttling, API/audit secrecy, append-only audit, cleanup and the confirmed recovery CLI. Expiry uses an injected service clock, not sleeps. Synthetic account writes are isolated from store/development fixtures.
 
-To use installed Edge instead of downloading Chromium on Windows:
+The existing task-local portable harness runs PostgreSQL **17.10** bound to `127.0.0.1:55437`, uses a random private password file and stops the owned server in finally. From this task workspace:
+
+```powershell
+& 'C:\Users\Ryzen\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' work/verify-postgres.mjs
+```
+
+The portable wrapper/runtime lives in `work/`, outside the application dependencies. It is an existing host-specific testing facility, not a production database installer. No global database service was installed. Tests retain fresh disposable DBs for investigation instead of resetting any existing DB.
+
+## Browser gate
+
+Use a newly created, migrated loopback DB ending in `_test` with uninitialized InstallationState. Set E2E_DATABASE_URL to it, distinct from DATABASE_URL; do not reuse an initialized DB for the first-run scenario. Generate an isolated random setup key into a private E2E_SETUP_SECRET_FILE, and set E2E_OWNER_PASSWORD to a random synthetic password with 12–128 characters. E2E_OWNER_LOGIN is optional (synthetic default identifier only). Never use actual owner credentials. No persisted browser storage state/trace includes auth bodies; trace is deliberately off.
+
+Run `npm run test:e2e`. It builds production assets and starts/stops a fresh production server on `127.0.0.1:3333`, passing the isolated DB/key/origin explicitly. Stop any manual preview first. Do not enable E2E_REUSE_SERVER for the first-run gate; intentional reuse is only for reviewed manual diagnostics and cannot certify fresh setup.
+
+Install Playwright Chromium if needed (`npx playwright install chromium`), or select installed Edge:
 
 ```powershell
 $env:PLAYWRIGHT_EXECUTABLE_PATH = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
 npm run test:e2e
 ```
 
-For an intentional retained preview only, set `E2E_REUSE_SERVER=1`; otherwise the runner refuses to silently reuse a possibly stale server. CI never reuses an existing server.
+On this host the existing harness creates a fresh E2E DB, random secret file/password and passes them directly to the browser run without printing values:
 
-Browser checks cover 1366×768 desktop layout, 390×844 navigation/overflow, reduced motion, unavailable-module disclosure, settings search/filter/pagination, dialog focus/Escape/focus restoration, connection failure/retry and no external asset requests. The browser timezone is deliberately Asia/Tokyo; the interface receives the business date from the API. Axe runs WCAG 2 A/AA and WCAG 2.1 AA checks on overview, settings and the dialog. Passing automation does not establish complete accessibility or operator usability.
+```powershell
+$env:RUN_POMMIER_E2E = '1'
+& 'C:\Users\Ryzen\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' work/verify-postgres.mjs
+```
 
-Blocking external browser requests verifies the **foundation's local assets**. It does not prove full store operations work offline, because those modules are not yet implemented. Do not describe it as the final offline-operation acceptance test.
+Browser coverage retains all seven foundation checks and adds setup/double-submit, invalid/valid login, visible current user, account dialogs/role/state/password reset, own password change, Unicode rejection without truncation, CASHIER/PRODUCTION restrictions, server-expired session state, logout and narrow login. Expiry modifies only the isolated session timestamps then triggers normal focus revalidation; no authentication bypass exists in the app. Viewports: 1366×768 and 390×844. Keyboard/dialog containment, Escape/focus restoration, reduced motion, overflow, local assets, failure/retry and Axe WCAG 2/2.1 A/AA checks run. Browser timezone is Asia/Tokyo to preserve Fortaleza-date regression coverage.
 
-## Environmental restrictions
+Passing Axe does not establish complete accessibility. Blocking external asset requests demonstrates local installed assets, not complete disconnected store operations. Full operational persistence, backup/restore and a human pilot remain Phases 8–9.
 
-The initial sandbox denied npm network access and compiler child processes (`ECONNREFUSED 127.0.0.1:9` / `spawn EPERM`). The permitted executions ran with the bundled Node 24.19.0 runtime and access needed for local child processes/package download. No system-wide tools, Windows services, browser profiles or store records were changed.
+## Development fixtures and logs
 
-The exact execution record and unresolved release gates are in PROGRESS.md and TEST_MATRIX.md.
+Development fixtures are optional and separate from automated tests. Follow AUTH_SECURITY.md; the command refuses production, absent opt-in, remote/non-dev/operational targets and does not reset an initialized DB. The guards are unit tested, including connection query overrides and encoded same-target aliases. The actual production fixture CLI refusal was checked without connecting to a DB. Secret CLI generation, no-value output and no-overwrite behavior were also executed on a private scratch target. Test setup uses fresh DBs through normal setup APIs/services, not a hidden seed.
+
+No request body, password, installation key, raw cookie or digest should appear in diagnostic logs, API projections or test output. Request/audit failures should report correlation IDs and safe codes. Keep private scratch DB/key files out of deliverables and Git. Review a failed browser artifact before sharing; do not enable credential-capturing traces.
+
+Actual counts, failures fixed and remaining limitations are in PROGRESS.md, TEST_MATRIX.md and KNOWN_LIMITATIONS.md.

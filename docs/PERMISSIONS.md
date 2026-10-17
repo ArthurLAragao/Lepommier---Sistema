@@ -1,6 +1,20 @@
 # Permission matrix
 
-The API must enforce this matrix. A hidden/disabled UI control is not authorization. OWNER has all access; managers receive only the explicitly listed corrections. No default production credentials.
+The API enforces the implemented Phase 2 permissions below. The operational matrix specifies later modules; it does not claim that those modules exist. A hidden/disabled UI control is not authorization. Managers receive only the explicitly listed corrections. No default production credentials.
+
+## Enforced in Phase 2
+
+| Named permission                                                | OWNER | MANAGER | CASHIER | PRODUCTION |
+| --------------------------------------------------------------- | ----- | ------- | ------- | ---------- |
+| profile.self: current account, logout, own password change      | Yes   | Yes     | Yes     | Yes        |
+| accounts.manage: list/create/edit/activate/disable/reset others | Yes   | No      | No      | No         |
+| security.review: latest safe security events via API            | Yes   | No      | No      | No         |
+
+The shared permission map, reusable route check and service reauthorization under the database lock enforce these rules. Settings navigation contains personal password controls and non-sensitive diagnostics for all roles; this resolves the earlier broad “Users/roles/settings” label. Only OWNER administers accounts or future store configuration. There is no editable store configuration in this phase. The authenticated overview is a non-operational foundation for all roles, without invented business figures.
+
+Owner changes require account version and a reason. Any role change/disabling revokes the target's sessions. Resetting another account requires the owner's current password and a reason; self-reset uses own password change. Login identifiers are immutable. No destructive account deletion route exists. The last active owner cannot be demoted or disabled; concurrent changes reauthorize under the same database lock. Maximum five active accounts includes owners; deactivated accounts retain references/history. The limit is an explicit initial deployment policy, subject to owner review before pilot.
+
+## Operational matrix for Phases 3–9
 
 | Capability                       | OWNER | MANAGER                         | CASHIER             | PRODUCTION      |
 | -------------------------------- | ----- | ------------------------------- | ------------------- | --------------- |
@@ -25,8 +39,8 @@ The API must enforce this matrix. A hidden/disabled UI control is not authorizat
 | Backup administration            | Yes   | No                              | No                  | No              |
 | Audit/security review            | Yes   | No by default                   | No                  | No              |
 
-## Session/setup controls
+## Session/setup controls implemented
 
-One-time owner setup on loopback with installation secret and database race guard. Disable setup after owner creation. Established password hashing; opaque sessions in HttpOnly SameSite cookies; expiry and logout invalidation. Secure cookies under HTTPS, documented local HTTP exception. Mutations validate Origin/CSRF. Rate limit login. Never store auth tokens in localStorage or log credentials/cookies.
+One-time owner setup requires direct loopback plus a private file-delivered installation secret, exact Origin and required CSRF header. A database transaction closes it permanently while creating the owner; forwarded headers cannot authorize setup. Argon2id hashes, opaque digest-backed sessions, HttpOnly/SameSite=Strict/Path=/ cookies, 12-hour absolute expiry and logout invalidation are implemented. Secure applies to HTTPS; local HTTP is an explicit exception. A new login replaces old access. Password/role/activation changes revoke sessions. Missing/null Origin and missing/invalid CSRF header are rejected for every identity mutation. No CORS allowance or browser token storage.
 
-Protect the last active owner from deactivation/demotion. Role changes invalidate affected sessions. At most five active staff is an initial owner-validatable operational limit. Audit login/security outcomes, permission changes, price changes, discounts, refunds, cancellations, adjustments, cash corrections, exports, imports and settings changes.
+Persistent login budgets are eight attempts per normalized identifier and sixty per direct source per fixed ten-minute window, with temporary retries and bounded password work. Security audit records login/logout/setup/account/permission/password events and coalesced denials. Price/discount/refund/cash/export/import/business audit comes with those modules. See AUTH_SECURITY.md for exact behavior and the Portuguese access guide for local recovery. Future permissions must be enforced on each backend endpoint before enabling its UI.

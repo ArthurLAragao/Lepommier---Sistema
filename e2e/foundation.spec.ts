@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { ensureOwner } from './auth-fixture.js';
+test.beforeEach(async ({ page }) => {
+  await ensureOwner(page);
+});
 
 test('local shell, real API connection and honest unavailable modules', async ({ page }) => {
   const errors: string[] = [];
@@ -7,7 +11,7 @@ test('local shell, real API connection and honest unavailable modules', async ({
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Visão geral', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Verificar conexão' })).toBeEnabled();
-  await expect(page.getByText('Nenhum registro real foi criado.')).toBeVisible();
+  await expect(page.getByText('Nenhuma operação de loja foi registrada.')).toBeVisible();
   await page.getByRole('button', { name: 'Vendas Em breve', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Vendas ainda não está disponível' }),
@@ -21,10 +25,11 @@ test('local shell, real API connection and honest unavailable modules', async ({
 test('settings search, filtering and pagination work', async ({ page }) => {
   await page.goto('/#settings');
   await expect(page.getByText('Conexão desta instalação')).toBeVisible();
-  await page.getByRole('button', { name: 'Próxima página' }).click();
+  const modules = page.locator('.module-card');
+  await modules.getByRole('button', { name: 'Próxima página' }).click();
   await expect(page.getByText('Página 2 de 2')).toBeVisible();
   await page.getByRole('searchbox', { name: 'Buscar módulo' }).fill('produção');
-  await expect(page.getByRole('cell', { name: 'Produção', exact: true })).toBeVisible();
+  await expect(modules.getByRole('cell', { name: 'Produção', exact: true })).toBeVisible();
   await page.getByRole('combobox', { name: 'Disponibilidade' }).selectOption('available');
   await expect(page.getByRole('heading', { name: 'Nenhum módulo encontrado' })).toBeVisible();
 });

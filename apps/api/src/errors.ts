@@ -31,6 +31,8 @@ export function installErrorHandler(app: FastifyInstance) {
       });
     }
     if (error instanceof AppError) {
+      if (error.statusCode === 429)
+        reply.header('retry-after', error.code === 'LOGIN_THROTTLED' ? 600 : 2);
       return reply
         .status(error.statusCode)
         .send({ error: { code: error.code, message: error.message, requestId } });

@@ -11,6 +11,11 @@
     "node": ">=24 <25"
   },
   "scripts": {
+    "setup:secret": "node --env-file-if-exists=.env scripts/setup-secret.mjs",
+    "preauth:recover-owner": "npm run prepare:workspace",
+    "auth:recover-owner": "node --env-file-if-exists=.env --import tsx scripts/recover-owner.ts",
+    "predev:fixture": "npm run prepare:workspace",
+    "dev:fixture": "node --env-file-if-exists=.env --import tsx scripts/dev-fixture.ts",
     "prepare:workspace": "npm run db:generate && npm run build -w @pommier/shared",
     "predev": "npm run db:generate",
     "dev": "npm run build -w @pommier/shared && concurrently --kill-others-on-fail --names api,web \"npm run dev -w @pommier/api\" \"npm run dev -w @pommier/web\"",

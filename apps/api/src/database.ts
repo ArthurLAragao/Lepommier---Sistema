@@ -3,6 +3,7 @@ import { PrismaClient } from './generated/prisma/client.js';
 import type { DatabaseStatus } from '@pommier/shared';
 
 export interface DatabaseProbe {
+  client?: PrismaClient;
   check(): Promise<DatabaseStatus>;
   close(): Promise<void>;
 }
@@ -22,6 +23,7 @@ export function createDatabase(url: string | undefined): DatabaseProbe {
   });
   const prisma = new PrismaClient({ adapter });
   return {
+    client: prisma,
     async check() {
       try {
         await prisma.$queryRaw`SELECT 1`;

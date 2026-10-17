@@ -2,6 +2,32 @@
 
 Status describes implemented evidence, not intentions. Most scenarios depend on modules intentionally unavailable in the current foundation.
 
+## Phase 2 acceptance evidence
+
+All tests below execute against real isolated PostgreSQL unless marked unit/browser. See TESTING.md for safe commands and PROGRESS.md for counts/runtime.
+
+| Requirement                                                                              | Evidence                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1–6: setup once, wrong secret, direct loopback, forwarded spoof, race, permanent closure | Auth integration: exactly one concurrent success, IPv6 acceptance, non-loopback/forwarded rejection, trigger reversal rejection, closure even after out-of-app disable                                                               |
+| 7–9: valid/invalid/disabled login                                                        | Auth integration: normalized login, matching generic unknown/wrong/disabled error, no default account                                                                                                                                |
+| 10: digests only                                                                         | Stored SHA-256 token digest differs from cookie; raw token absent from JSON                                                                                                                                                          |
+| 11–14: authentication/logout/expiry/disable                                              | Real session lookup, logout invalidation, controlled-clock absolute expiry and disabled-account revocation                                                                                                                           |
+| 15–16: passwords/roles                                                                   | Complete password preserved, all prior sessions revoked; role changes revoke access; owner reset reauth and offline confirmed recovery CLI                                                                                           |
+| 17–18: restricted roles                                                                  | MANAGER, CASHIER and PRODUCTION cannot list/create/edit accounts or read audit; denial coalescing verified                                                                                                                           |
+| 19–20: owner invariant                                                                   | Last owner's self-disable/demotion refused; concurrent cross-account changes and simultaneous self-disable/self-demotion retain one owner                                                                                            |
+| 21–22: CSRF/origin                                                                       | Every setup/login/logout/password/create/edit/reset mutation rejects missing/invalid header, absent/foreign Origin and cross-site metadata                                                                                           |
+| 23: throttle                                                                             | Fixed identifier window, Retry-After, source persistence across service instances and bounded stored keys; unit test native job budget and recovery                                                                                  |
+| 24: safe data                                                                            | Me/list/state/audit omit password hashes, session digests, submitted passwords and key; unit allowlist/error serialization; append-only audit trigger                                                                                |
+| 25: cookies                                                                              | HttpOnly/SameSite=Strict/Path=/, no Domain, local HTTP exception and configured HTTPS Secure attribute                                                                                                                               |
+| 26: migrations                                                                           | Clean apply plus original-foundation-only upgrade preserving a pre-existing StoreSettings marker; unchanged foundation migration                                                                                                     |
+| Account consistency                                                                      | Stale edits rejected, five-active-account concurrent creation limit enforced, no destructive user API                                                                                                                                |
+| Development safeguards                                                                   | Unit guards refuse production, absent opt-in, remote/non-PostgreSQL/non-dev/operational targets, encoded aliases and query overrides; actual fixture CLI production refusal and secret CLI no-overwrite checked                      |
+| Browser identity                                                                         | Setup/double-submit, login/invalid feedback/correlation ID, logout, actual expiry, owner account/reset workflows, own password change, restricted navigation/API, initial verification failure/retry and delayed-refresh logout race |
+| Browser input/accessibility/layout                                                       | 129-emoji password rejected without truncation; keyboard forms/dialogs, desktop 1366×768, narrow 390×844, Axe, no protected-content flash before resolution                                                                          |
+| Foundation regressions                                                                   | Original unit/API/PostgreSQL and all seven browser scenarios retained, including strict CSP, local assets, connection failure/retry and unavailable modules                                                                          |
+
+## Operational release scenarios still pending
+
 | #   | Required scenario                          | Current evidence                                                                                       |
 | --- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
 | 1   | Anonymous counter sale                     | Pending Phase 5                                                                                        |
@@ -19,8 +45,8 @@ Status describes implemented evidence, not intentions. Most scenarios depend on 
 | 13  | Excess waste rejected                      | Pending Phase 4                                                                                        |
 | 14  | Reserved-stock disposal rejected           | Pending Phase 4                                                                                        |
 | 15  | Old order totals survive price changes     | Pending Phases 3/5                                                                                     |
-| 16  | Unauthorized refund                        | Pending Phases 2/5                                                                                     |
-| 17  | Unauthorized customer export               | Pending Phases 2/3                                                                                     |
+| 16  | Unauthorized refund                        | Identity/authorization foundation implemented; refund endpoint and enforcement pending Phase 5         |
+| 17  | Unauthorized customer export               | Identity/authorization foundation implemented; customer export enforcement pending Phase 3             |
 | 18  | Cash tender/change                         | Pending Phase 5; money parser alone does not verify this                                               |
 | 19  | Pix/card excluded from drawer              | Pending Phase 6                                                                                        |
 | 20  | Closing discrepancy                        | Pending Phase 6                                                                                        |

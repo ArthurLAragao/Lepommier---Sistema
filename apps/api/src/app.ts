@@ -2,6 +2,9 @@ import { randomUUID } from 'node:crypto';
 import Fastify from 'fastify';
 import helmet from '@fastify/helmet';
 import fastifyStatic from '@fastify/static';
+import cookie from '@fastify/cookie';
+import { AuthService } from './auth/service.js';
+import { registerAuthRoutes } from './auth/routes.js';
 import {
   APP_VERSION,
   BUSINESS_TIMEZONE,
@@ -16,6 +19,9 @@ export interface AppOptions {
   logger?: boolean;
   webRoot?: string;
   clock?: () => Date;
+  origin?: string;
+  apiHost?: string;
+  installationSecret?: string;
 }
 
 export async function buildApp(options: AppOptions) {
@@ -40,6 +46,7 @@ export async function buildApp(options: AppOptions) {
     requestTimeout: 10000,
   });
   installErrorHandler(app);
+  await app.register(cookie);
   await app.register(helmet, {
     contentSecurityPolicy: {
       directives: {
@@ -64,6 +71,39 @@ export async function buildApp(options: AppOptions) {
     await options.database.close();
   });
 
+  const auth = options.database.client
+    ? new AuthService(options.database.client, clock, options.installationSecret)
+    : undefined;
+  await app.register(
+    async (authApp) =>
+      registerAuthRoutes(authApp, {
+        ...(auth ? { service: auth } : {}),
+        origin: options.origin ?? 'http://127.0.0.1:3333',
+        apiHost: options.apiHost ?? '127.0.0.1:3333',
+      }),
+    { prefix: '/api' },
+  );
+  if (auth) {
+    const cleanup = () => {
+      void auth
+        .cleanup()
+        .catch(() =>
+          app.log.warn(
+            { event: 'session_cleanup_failed' },
+            'Não foi possível limpar os acessos expirados.',
+          ),
+        );
+    };
+    app.addHook('onReady', async () => {
+      cleanup();
+    });
+    const timer = setInterval(cleanup, 3_600_000);
+    timer.unref();
+    app.addHook('onClose', async () => {
+      clearInterval(timer);
+    });
+  }
+
   app.get('/api/health/live', async () => ({ status: 'ok', version: APP_VERSION }));
   app.get('/api/health/ready', async (_request, reply) => {
     const database = await options.database.check();
@@ -76,7 +116,7 @@ export async function buildApp(options: AppOptions) {
     const now = clock();
     return systemStatusSchema.parse({
       version: APP_VERSION,
-      phase: 1,
+      phase: 2,
       businessTimezone: BUSINESS_TIMEZONE,
       businessDate: businessDateOf(now),
       timestamp: now.toISOString(),

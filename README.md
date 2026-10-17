@@ -6,34 +6,40 @@ An incremental, local-first implementation of the supplied Le Pommier brief. Int
 
 ## Start here
 
-1. Install Node.js 24 LTS and Docker Desktop with Compose (initial internet access required).
+1. Use Node.js 24 LTS and a local PostgreSQL instance. Development/test Compose is optional when Docker is already available; Docker has not been verified on this host. Initial dependency installation requires internet.
 2. In this directory run `npm ci`.
 3. Copy `.env.example` to `.env`, set a unique database password and update `DATABASE_URL` to match. Never commit `.env`.
-4. Start the development database with `docker compose up -d db`.
-5. Generate the client and apply the foundation migration: `npm run db:generate` then `npm run db:migrate`.
-6. Run `npm run dev`. Open **http://127.0.0.1:5173**. The API listens on loopback port 3333; Vite proxies `/api`.
+4. Start the local database (or `docker compose up -d db` for the supplied development service).
+5. Run `npm run db:generate`, `npm run db:validate`, then `npm run db:migrate`. Both additive migrations are applied; do not reset a database or delete the original migration.
+6. Run `npm run setup:secret` once before starting the app. It exclusively creates a random key in the private gitignored `data/installation-secret` file without printing it. Restrict local filesystem access; Windows ACLs need operator configuration.
+7. Run `npm run dev`. Open **http://127.0.0.1:5173**. The API listens on loopback port 3333; Vite proxies `/api`. The authorized installer reads the private key locally and enters it in the masked first-run form, choosing all owner credentials. Setup closes permanently; continue to login. No public registration/default credentials.
 
-The interface must show a database warning if PostgreSQL is unavailable. A successful frontend build alone does not verify persistence or database behavior.
+The interface gates access while checking installation/session state and shows an actionable error if PostgreSQL/migrations are unavailable. A successful frontend build alone does not verify persistence or database behavior. See the [Portuguese access/operator guide](docs/ACCESS_OPERATOR_GUIDE.pt-BR.md) for setup, accounts and controlled local recovery, and [security policy](docs/AUTH_SECURITY.md) for sessions, CSRF/origin and secret handling.
 
 For a local production-asset preview, run `npm run build` then `npm start` and open **http://127.0.0.1:3333**. The start command selects production asset serving even if the development `.env` is present. This previews the current foundation; it is not a completed production store release.
 
+Leave PUBLIC_ORIGIN unset for these defaults, or set its exact local origin for the selected mode. Do not mix localhost/IP/IPv6 addresses. HTTP loopback uses HttpOnly/SameSite=Strict cookies without Secure; a reviewed HTTPS origin uses Secure. HTTPS/proxy/LAN deployment is not verified. One current session per account expires after 12 absolute hours; password/role/disabling changes revoke sessions. Identity is implemented; store operations remain unavailable.
+
 ## Commands
 
-| Command                    | Purpose                                                    |
-| -------------------------- | ---------------------------------------------------------- |
-| `npm run dev`              | Start local frontend and backend                           |
-| `npm run typecheck`        | Check all workspace TypeScript                             |
-| `npm run lint`             | ESLint with zero warnings                                  |
-| `npm run format:check`     | Check source/document formatting                           |
-| `npm test`                 | Unit and API contract tests; no real store data            |
-| `npm run test:integration` | Dedicated PostgreSQL integration checks                    |
-| `npm run test:e2e`         | Browser checks using Playwright                            |
-| `npm run build`            | Build shared contracts, API and local frontend assets      |
-| `npm start`                | Serve built app and API on the same local origin           |
-| `npm run db:generate`      | Generate Prisma client                                     |
-| `npm run db:validate`      | Validate Prisma configuration/schema                       |
-| `npm run db:migrate`       | Apply migrations to the configured local database          |
-| `npm run db:migrate:test`  | Apply migrations only to a guarded dedicated test database |
+| Command                                                  | Purpose                                                      |
+| -------------------------------------------------------- | ------------------------------------------------------------ |
+| `npm run dev`                                            | Start local frontend and backend                             |
+| `npm run typecheck`                                      | Check all workspace TypeScript                               |
+| `npm run lint`                                           | ESLint with zero warnings                                    |
+| `npm run format:check`                                   | Check source/document formatting                             |
+| `npm test`                                               | Unit and API contract tests; no real store data              |
+| `npm run test:integration`                               | Dedicated PostgreSQL integration checks                      |
+| `npm run test:e2e`                                       | Browser checks using Playwright                              |
+| `npm run build`                                          | Build shared contracts, API and local frontend assets        |
+| `npm start`                                              | Serve built app and API on the same local origin             |
+| `npm run db:generate`                                    | Generate Prisma client                                       |
+| `npm run db:validate`                                    | Validate Prisma configuration/schema                         |
+| `npm run db:migrate`                                     | Apply migrations to the configured local database            |
+| `npm run db:migrate:test`                                | Apply migrations only to a guarded dedicated test database   |
+| `npm run setup:secret`                                   | Create the private initial installation key, never overwrite |
+| `npm run auth:recover-owner -- --confirm-local-recovery` | Confirmed offline local owner recovery; see operator guide   |
+| `npm run dev:fixture -- --confirm-dev-fixture`           | Explicit guarded disposable development account only         |
 
 Stop development with Ctrl+C. Stop PostgreSQL with `docker compose stop db`; **do not run `down -v` on store data**. The computer must remain on and awake for the app to be available. Initial installation and updates may need internet; installed core operations must not.
 

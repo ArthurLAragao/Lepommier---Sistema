@@ -8,11 +8,71 @@ datasource db {
   provider = "postgresql"
 }
 
-// Phase 1 foundation metadata only. Operational entities are designed in
-// docs/ARCHITECTURE.md and added with Phase 2 migrations, not fake placeholders.
+// The original metadata table and migration are preserved.
 model StoreSettings {
   id               Int      @id @default(1)
   businessTimezone String   @default("America/Fortaleza")
   createdAt        DateTime @default(now()) @db.Timestamptz(3)
   updatedAt        DateTime @updatedAt @db.Timestamptz(3)
+}
+
+enum Role {
+  OWNER
+  MANAGER
+  CASHIER
+  PRODUCTION
+}
+
+model InstallationState {
+  id            Int       @id @default(1)
+  initializedAt DateTime? @db.Timestamptz(3)
+}
+
+model User {
+  id              String       @id @default(uuid()) @db.Uuid
+  loginIdentifier String       @unique @db.VarChar(32)
+  displayName     String       @db.VarChar(80)
+  passwordHash    String
+  role            Role
+  active          Boolean      @default(true)
+  version         Int          @default(1)
+  createdAt       DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime     @updatedAt @db.Timestamptz(3)
+  sessions        Session[]
+  auditEvents     AuditEvent[]
+}
+
+model Session {
+  id          String    @id @default(uuid()) @db.Uuid
+  tokenDigest String    @unique @db.Char(64)
+  userId      String    @db.Uuid
+  user        User      @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  expiresAt   DateTime  @db.Timestamptz(3)
+  revokedAt   DateTime? @db.Timestamptz(3)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+model AuditEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  eventType     String   @db.VarChar(40)
+  actorId       String?  @db.Uuid
+  actor         User?    @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  targetId      String?  @db.Uuid
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  correlationId String   @db.VarChar(64)
+  metadata      Json
+
+  @@index([createdAt])
+  @@index([actorId, eventType, createdAt])
+}
+
+model LoginThrottle {
+  key             String   @id @db.VarChar(80)
+  windowStartedAt DateTime @db.Timestamptz(3)
+  attempts        Int
+
+  @@index([windowStartedAt])
 }

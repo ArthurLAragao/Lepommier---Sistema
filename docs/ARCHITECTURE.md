@@ -4,7 +4,7 @@
 
 TypeScript monorepo: `apps/web` (React/Vite/Tailwind), `apps/api` (Fastify/Zod/Prisma), `packages/shared` (validated transport contracts and pure locale/domain helpers), `docs` and `scripts`. PostgreSQL is the persistent operational database. No microservices, cloud storage or remote authentication.
 
-Production serves local frontend files and `/api` from the same Fastify origin. Development uses a Vite proxy. Default hosts are `127.0.0.1`; PostgreSQL's development port is loopback-only, and the production DB has no published port. No broad CORS. LAN access is future opt-in, requiring a trusted firewall rule, HTTPS, host authentication review and physical network controls. A responsive page is not remote mobile deployment.
+Production serves local frontend files and `/api` from the same Fastify origin. Development uses a Vite proxy. Default hosts are `127.0.0.1`; PostgreSQL's development port is loopback-only. Only development/test database Compose is currently supplied; a production container/network installation is pending Phase 8. No broad CORS. LAN access is future opt-in, requiring a trusted firewall rule, HTTPS, host authentication review and physical network controls. A responsive page is not remote mobile deployment.
 
 ## Boundaries and dependencies
 
@@ -19,20 +19,25 @@ Production serves local frontend files and `/api` from the same Fastify origin. 
 
 Routes validate input and delegate to transactional services. Shared schemas describe transport data, never replace database constraints. API responses use `{ error: { code, message, requestId, fields? } }`. Errors shown to employees are Portuguese and never contain stack traces or database credentials. Request logs exclude bodies, cookies, authorization and query data containing personal information.
 
-## Database design plan (not a claim of implementation)
+## Implemented database foundation and identity
 
-| Entity                                             | Relationships and safeguards                                                                                                           |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| User / Session                                     | Individual role and active state; hashed password; hashed opaque session secret; expiry, invalidation; protected last-owner management |
-| Customer / CustomerMarketingPreference             | Separate optional identity and preference provenance; immutable history survives anonymization                                         |
-| Category / Product                                 | Unique SKU, integer nonnegative centavos, positive whole units at operation boundaries, active flag, origin, stock tracking            |
-| ProductionRecord / PurchasedProductReceipt / Batch | Batch product identity, optional expiry, completion source unique, actual quantity and responsible user                                |
-| InventoryMovement / InventoryReservation           | Signed ledger delta; source uniqueness; reservation state and allocated batch; responsible user/reason                                 |
-| Order / OrderItem                                  | Source and state, separate payment state, immutable snapshots after confirmation, customer optional for counter                        |
-| Payment / Refund                                   | One successful full payment per order, unique full refund reference, actor and current cash session                                    |
-| CashSession / CashMovement                         | Partial unique index for single active session, append-only money movement, preserved closing snapshot                                 |
-| AuditEvent / IdempotencyRecord                     | Correlation ID, safe event payload; actor/scope/key/request fingerprint/response binding                                               |
-| StoreSettings / ImportJob                          | Setup state, business timezone, operational defaults; import preview/mapping/review/results                                            |
+The preserved foundation migration creates StoreSettings. Additive migration `202610170002_identity` creates User, Session, AuditEvent, InstallationState, LoginThrottle and Role, with explicit uniqueness/check constraints, restrictive historical references, timestamps and lookup/expiry indexes. It contains no operational records or default credentials. The installation singleton is distinct from StoreSettings; it permanently closes first-owner setup. Audit records are append-only.
+
+Security-sensitive transactions lock the singleton row, reauthorize the actor, enforce account versions, preserve one active owner and serialize the five-active-account limit. Setup owner creation/closure and audit commit together. Real PostgreSQL tests exercise both clean application and an upgrade preserving an existing foundation record. See [AUTH_SECURITY.md](AUTH_SECURITY.md) for the implemented schema/security boundaries.
+
+## Future operational database design (not implemented)
+
+| Entity                                             | Relationships and safeguards                                                                                                |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Customer / CustomerMarketingPreference             | Separate optional identity and preference provenance; immutable history survives anonymization                              |
+| Category / Product                                 | Unique SKU, integer nonnegative centavos, positive whole units at operation boundaries, active flag, origin, stock tracking |
+| ProductionRecord / PurchasedProductReceipt / Batch | Batch product identity, optional expiry, completion source unique, actual quantity and responsible user                     |
+| InventoryMovement / InventoryReservation           | Signed ledger delta; source uniqueness; reservation state and allocated batch; responsible user/reason                      |
+| Order / OrderItem                                  | Source and state, separate payment state, immutable snapshots after confirmation, customer optional for counter             |
+| Payment / Refund                                   | One successful full payment per order, unique full refund reference, actor and current cash session                         |
+| CashSession / CashMovement                         | Partial unique index for single active session, append-only money movement, preserved closing snapshot                      |
+| Operational audit / IdempotencyRecord              | Reuse security audit conventions; actor/scope/key/request fingerprint/response binding                                      |
+| StoreSettings expansion / ImportJob                | Business timezone, operational defaults; import preview/mapping/review/results                                              |
 
 Use foreign keys with RESTRICT for financial/catalog references. Avoid destructive cascades of historical records. Use version numbers for mutable customer/catalog edits and reject stale versions.
 
@@ -44,11 +49,13 @@ Order confirmation, reservation, payment, handover, refund and cash close acquir
 
 An idempotency key is generated before submission. The key is retained in the UI during uncertain results and bound to actor, action and a request fingerprint. Reuse with a different payload is rejected. An authenticated lookup resolves an uncertain result; a new key must never be generated automatically for a retry.
 
-## Security plan
+## Implemented identity security
 
-First owner setup must be limited to loopback and guarded by a one-time installation secret, with a database lock to prevent racing owner creation. Unrestricted setup closes permanently after owner creation. Password hashing uses an established library. Sessions use HttpOnly SameSite cookies, production-aware Secure flags, fixed expiry and logout invalidation. Origin/CSRF validation applies to mutations. No authentication token in browser storage.
+First-owner setup requires a private local 256-bit installation key, direct loopback peer and exact Origin/non-simple CSRF header. Forwarded headers are not trusted. Setup closure and owner creation are atomic and database-locked. Argon2id password hashing uses bounded native work. Opaque sessions store only digests, use HttpOnly/SameSite=Strict/Path=/ cookies, expire after 12 absolute hours and are revoked by logout, password changes, role changes or disabling. Secure follows the configured HTTPS origin; loopback HTTP is explicit. No auth tokens in browser storage. Existing CSP/security headers remain restrictive.
 
-Backend permission checks, restricted exports, login throttling and safe audit events are mandatory. Uploads, if implemented, use size/type validation and generated names in a non-executable local directory. Restore is an administrator command, never a general employee endpoint.
+Backend authorization uses shared named permissions and transactional rechecks. Only OWNER administers accounts/reviews security events; every role manages its own password. Persistent source/identifier throttles and safe audit events are implemented. Public health/installation endpoints expose only non-sensitive status; protected account/session endpoints omit hashes/digests. Logs omit credentials and bodies. Development fixtures are explicit, guarded and separate. Recovery is a confirmed offline local CLI, not a reset endpoint. Details and operator procedure are in AUTH_SECURITY.md and ACCESS_OPERATOR_GUIDE.pt-BR.md.
+
+Restricted exports and business permissions arrive with later modules. Uploads, if implemented, must use size/type validation and generated names in a non-executable local directory. Backup/restore remains Phase 8 and must be an administrator procedure, never a general employee endpoint.
 
 ## Runtime and dependencies
 

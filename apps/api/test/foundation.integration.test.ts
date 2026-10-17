@@ -4,22 +4,9 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { createDatabase } from '../src/database.js';
 import { buildApp } from '../src/app.js';
+import { testUrl } from './database.js';
 
-const rawUrl = process.env.TEST_DATABASE_URL;
-if (!rawUrl)
-  throw new Error(
-    'TEST_DATABASE_URL is required. Use the dedicated test database; see docs/TESTING.md.',
-  );
-const url = new URL(rawUrl);
-if (
-  !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) ||
-  !url.pathname.endsWith('_test') ||
-  rawUrl === process.env.DATABASE_URL
-) {
-  throw new Error(
-    'Integration tests require a distinct loopback PostgreSQL database with a name ending in _test.',
-  );
-}
+const rawUrl = testUrl().toString();
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: rawUrl, connectionTimeoutMillis: 2000 }),

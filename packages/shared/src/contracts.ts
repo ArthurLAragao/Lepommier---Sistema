@@ -110,7 +110,7 @@ export type DatabaseStatus = z.infer<typeof databaseStatusSchema>;
 
 export const systemStatusSchema = z.object({
   version: z.string(),
-  phase: z.literal(1),
+  phase: z.literal(2),
   businessTimezone: z.literal(BUSINESS_TIMEZONE),
   businessDate: businessDateSchema,
   timestamp: z.iso.datetime(),

@@ -1502,3 +1502,204 @@ td strong {
     scroll-behavior: auto !important;
   }
 }
+
+/* Phase 2: local identity screens reuse the provisional design tokens. */
+.auth-layout {
+  min-height: 100dvh;
+  width: 100%;
+  max-width: none;
+  padding: 44px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.auth-brand {
+  display: grid;
+  gap: 12px;
+  text-align: center;
+  margin-bottom: 28px;
+}
+.auth-brand .wordmark {
+  font-size: 38px;
+}
+.auth-card {
+  width: min(100%, 500px);
+  padding: 32px;
+}
+.auth-card h1 {
+  font-size: 26px;
+}
+.auth-help {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--color-text-muted);
+  margin: 12px 0;
+}
+.auth-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+.auth-form input {
+  min-height: 43px;
+}
+.auth-form .filter {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+}
+.auth-form .filter select {
+  width: 100%;
+  font-size: 14px;
+}
+.auth-form h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+.form-error {
+  padding: 12px;
+  border: 1px solid #d9a79b;
+  border-radius: 6px;
+  color: #8d392e;
+  background: #fff4ef;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+}
+.auth-footer {
+  max-width: 460px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--color-text-muted);
+  margin: 24px 0 0;
+}
+.current-role {
+  display: block;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 3px;
+}
+.password-card,
+.employee-card {
+  padding: 24px;
+  margin: 0 0 24px;
+}
+.password-card > .button {
+  justify-self: start;
+}
+.password-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.account-login {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+.account-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.account-actions .button {
+  padding: 8px;
+  font-size: 12px;
+  min-height: 34px;
+}
+.employee-card .section-title {
+  margin-top: 0;
+}
+.employee-card td,
+.employee-card th {
+  padding: 12px 8px;
+}
+.account-dialog {
+  max-width: 570px;
+}
+.account-dialog > p {
+  line-height: 1.8;
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 5px;
+}
+.auth-global-error {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  z-index: 80;
+  padding: 16px;
+  background: #fff4ef;
+  border: 1px solid #d9a79b;
+  border-radius: 8px;
+  color: #8d392e;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .password-fields {
+    grid-template-columns: 1fr;
+  }
+  .setup-label {
+    font-size: 12px;
+    gap: 8px;
+  }
+}
+@media (max-width: 650px) {
+  .auth-layout {
+    padding: 28px 18px;
+  }
+  .auth-card {
+    padding: 25px 20px;
+  }
+  .auth-card h1 {
+    font-size: 24px;
+  }
+  .auth-layout .brand-subtitle {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+  }
+  .password-card,
+  .employee-card {
+    padding: 18px 12px;
+  }
+  .employee-card .section-title {
+    flex-wrap: wrap;
+  }
+  .account-actions {
+    display: grid;
+    width: 78px;
+  }
+  .account-actions .button {
+    white-space: normal;
+    font-size: 11px;
+    width: 100%;
+  }
+  .employee-card td,
+  .employee-card th {
+    padding: 8px 4px;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+  .employee-card td .badge {
+    font-size: 11px;
+  }
+  .auth-global-error {
+    width: calc(100% - 32px);
+    flex-direction: column;
+  }
+}

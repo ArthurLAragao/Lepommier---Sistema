@@ -3,11 +3,29 @@ import { fileURLToPath } from 'node:url';
 
 const rawUrl = process.env.TEST_DATABASE_URL;
 if (!rawUrl) throw new Error('TEST_DATABASE_URL is required for the dedicated test database.');
-const url = new URL(rawUrl);
+function localTarget(raw) {
+  try {
+    const target = new URL(raw);
+    if (
+      ['postgres:', 'postgresql:'].includes(target.protocol) &&
+      ['127.0.0.1', 'localhost', '[::1]'].includes(target.hostname) &&
+      [...target.searchParams].every(([key, value]) => key === 'schema' && value === 'public')
+    )
+      return target;
+  } catch {
+    /* Report only a safe diagnostic, never the connection string. */
+  }
+  throw new Error(
+    'Use an unambiguous local PostgreSQL URL; only schema=public query parameters are allowed.',
+  );
+}
+const url = localTarget(rawUrl);
+const operational = process.env.DATABASE_URL ? localTarget(process.env.DATABASE_URL) : null;
 if (
-  !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) ||
   !url.pathname.endsWith('_test') ||
-  rawUrl === process.env.DATABASE_URL
+  (operational &&
+    decodeURIComponent(url.pathname) === decodeURIComponent(operational.pathname) &&
+    (url.port || '5432') === (operational.port || '5432'))
 ) {
   throw new Error(
     'Refusing migration: choose a distinct loopback database whose name ends in _test.',

@@ -68,7 +68,11 @@ export function Field({
   error,
   id,
   ...props
-}: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string; error?: string }) {
+}: InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  hint?: string | undefined;
+  error?: string | undefined;
+}) {
   const generated = useId();
   const fieldId = id ?? generated;
   return (
