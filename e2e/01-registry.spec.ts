@@ -66,7 +66,7 @@ test('empty customer list, required-name validation, optional details and safe p
   await expect(page.getByText('29/02/1980', { exact: true })).toBeVisible();
   await expect(page.getByText('***.***.***-25', { exact: false })).toBeVisible();
   await expect(
-    page.getByText('Disponível após a implementação de vendas e pedidos.', { exact: true }),
+    page.getByText('Nenhum pedido registrado para este cliente', { exact: true }),
   ).toBeVisible();
   expect(await page.evaluate(() => Object.hasOwn(window, 'syntheticXss'))).toBe(false);
   await page.screenshot({

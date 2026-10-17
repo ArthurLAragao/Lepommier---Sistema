@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import CustomerHistory from '../sales/CustomerHistory.js';
 import {
   customerListSchema,
   customerDetailSchema,
@@ -625,13 +626,7 @@ function CustomerProfile({
               )}
             </section>
           )}
-          <section className="card profile-card">
-            <h2>Compras e pagamentos</h2>
-            <p>Disponível após a implementação de vendas e pedidos.</p>
-            <p className="auth-help">
-              Não há totais ou histórico de operações verificados nesta fase.
-            </p>
-          </section>
+          <CustomerHistory id={id} current={current} />
           {editing && (
             <CustomerForm
               initial={customer}

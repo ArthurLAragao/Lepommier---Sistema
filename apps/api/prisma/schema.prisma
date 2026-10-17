@@ -48,6 +48,11 @@ model User {
   purchasedReceipts     PurchasedProductReceipt[]
   inventoryMovements    InventoryMovement[]
   inventoryReservations InventoryReservation[]
+  createdOrders         Order[]                    @relation("OrderCreator")
+  orderEvents           OrderEvent[]
+  payments              Payment[]
+  refunds               Refund[]
+  cashSessions          CashSession[]
 }
 
 model Session {
@@ -122,6 +127,7 @@ model Customer {
   updatedAt          DateTime                   @updatedAt @db.Timestamptz(3)
   version            Int                        @default(1)
   marketingEvents    MarketingPreferenceEvent[]
+  orders             Order[]
 
   @@index([nameKey, id])
   @@index([phone])
@@ -179,6 +185,7 @@ model Product {
   movements           InventoryMovement[]
   reservations        InventoryReservation[]
   allocations         ReservationAllocation[]
+  orderItems          OrderItem[]
 
   @@index([categoryId, active])
   @@index([nameKey, id])
@@ -226,6 +233,9 @@ model InventoryOperation {
   createdAt     DateTime            @default(now()) @db.Timestamptz(3)
   completedAt   DateTime?           @db.Timestamptz(3)
   movements     InventoryMovement[]
+  payment       Payment?
+  refund        Refund?
+  cashSession   CashSession?
 
   @@unique([actorId, key])
   @@index([createdAt])
@@ -317,7 +327,11 @@ model InventoryReservation {
   createdAt          DateTime                @db.Timestamptz(3)
   closedAt           DateTime?               @db.Timestamptz(3)
   allocations        ReservationAllocation[]
+  orderItemId        String?                 @unique @db.Uuid
+  orderItem          OrderItem?              @relation(fields: [orderItemId, productId, quantity], references: [id, productId, quantity], onDelete: Restrict, onUpdate: NoAction)
+  consumptions       InventoryMovement[]
 
+  @@unique([orderItemId, productId, quantity])
   @@unique([id, productId])
   @@unique([sourceNamespace, sourceReference, productId])
   @@index([status, productId])
@@ -340,27 +354,178 @@ model ReservationAllocation {
 }
 
 model InventoryMovement {
-  id                 String              @id @default(uuid()) @db.Uuid
-  productId          String              @db.Uuid
-  product            Product             @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  batchId            String              @db.Uuid
-  batch              Batch               @relation(fields: [batchId, productId], references: [id, productId], onDelete: Restrict, onUpdate: NoAction)
-  operationId        String              @db.Uuid
-  operation          InventoryOperation  @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  actorId            String              @db.Uuid
-  actor              User                @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  id                 String                @id @default(uuid()) @db.Uuid
+  productId          String                @db.Uuid
+  product            Product               @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  batchId            String                @db.Uuid
+  batch              Batch                 @relation(fields: [batchId, productId], references: [id, productId], onDelete: Restrict, onUpdate: NoAction)
+  operationId        String                @db.Uuid
+  operation          InventoryOperation    @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  actorId            String                @db.Uuid
+  actor              User                  @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   type               MovementType
   quantity           Int
-  reason             String              @db.VarChar(32)
-  notes              String?             @db.VarChar(500)
-  createdAt          DateTime            @db.Timestamptz(3)
-  correctsMovementId String?             @db.Uuid
-  correctsMovement   InventoryMovement?  @relation("MovementCorrection", fields: [correctsMovementId], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  corrections        InventoryMovement[] @relation("MovementCorrection")
+  reason             String                @db.VarChar(32)
+  notes              String?               @db.VarChar(500)
+  createdAt          DateTime              @db.Timestamptz(3)
+  correctsMovementId String?               @db.Uuid
+  correctsMovement   InventoryMovement?    @relation("MovementCorrection", fields: [correctsMovementId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  corrections        InventoryMovement[]   @relation("MovementCorrection")
+  reservationId      String?               @db.Uuid
+  reservation        InventoryReservation? @relation(fields: [reservationId, productId], references: [id, productId], onDelete: Restrict, onUpdate: NoAction)
 
   @@unique([operationId, batchId, type])
+  @@index([reservationId])
   @@index([productId, createdAt, id])
   @@index([batchId, createdAt, id])
+}
+
+enum OrderSource {
+  COUNTER
+  WHATSAPP
+}
+
+enum OrderStatus {
+  DRAFT
+  CONFIRMED
+  PREPARING
+  READY
+  FULFILLED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  PIX
+  DEBIT_CARD
+  CREDIT_CARD
+}
+
+model CashSession {
+  id                String             @id @default(uuid()) @db.Uuid
+  openedAt          DateTime           @db.Timestamptz(3)
+  openedById        String             @db.Uuid
+  openedBy          User               @relation(fields: [openedById], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  openingFloatCents BigInt
+  closedAt          DateTime?          @db.Timestamptz(3)
+  operationId       String             @unique @db.Uuid
+  operation         InventoryOperation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  payments          Payment[]
+  refunds           Refund[]
+}
+
+model Order {
+  id             String       @id @default(uuid()) @db.Uuid
+  number         Int          @unique @default(autoincrement())
+  source         OrderSource
+  customerId     String?      @db.Uuid
+  customer       Customer?    @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  status         OrderStatus  @default(DRAFT)
+  subtotalCents  BigInt
+  discountCents  BigInt       @default(0)
+  discountReason String?      @db.VarChar(32)
+  totalCents     BigInt
+  pickupAt       DateTime?    @db.Timestamptz(3)
+  pickupPerson   String?      @db.VarChar(120)
+  collectionNote String?      @db.VarChar(500)
+  notes          String?      @db.VarChar(1000)
+  createdAt      DateTime     @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @db.Timestamptz(3)
+  confirmedAt    DateTime?    @db.Timestamptz(3)
+  preparingAt    DateTime?    @db.Timestamptz(3)
+  readyAt        DateTime?    @db.Timestamptz(3)
+  fulfilledAt    DateTime?    @db.Timestamptz(3)
+  cancelledAt    DateTime?    @db.Timestamptz(3)
+  cancelReason   String?      @db.VarChar(32)
+  creatorId      String       @db.Uuid
+  creator        User         @relation("OrderCreator", fields: [creatorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  version        Int          @default(1)
+  items          OrderItem[]
+  payment        Payment?
+  refund         Refund?
+  events         OrderEvent[]
+
+  @@index([customerId, fulfilledAt, id])
+  @@index([status, pickupAt, id])
+  @@index([source, createdAt, id])
+}
+
+model OrderItem {
+  id             String                @id @default(uuid()) @db.Uuid
+  orderId        String                @db.Uuid
+  order          Order                 @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  productId      String                @db.Uuid
+  product        Product               @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  productCode    String                @db.VarChar(32)
+  productName    String                @db.VarChar(120)
+  productVersion Int
+  quantity       Int
+  unitPriceCents Int
+  subtotalCents  BigInt
+  discountCents  BigInt
+  totalCents     BigInt
+  reservation    InventoryReservation?
+
+  @@unique([orderId, productId])
+  @@unique([id, productId, quantity])
+}
+
+model Payment {
+  id                String             @id @default(uuid()) @db.Uuid
+  orderId           String             @unique @db.Uuid
+  order             Order              @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  amountCents       BigInt
+  method            PaymentMethod
+  tenderedCents     BigInt?
+  changeCents       BigInt?
+  manuallyConfirmed Boolean
+  actorId           String             @db.Uuid
+  actor             User               @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  recordedAt        DateTime           @db.Timestamptz(3)
+  cashSessionId     String             @db.Uuid
+  cashSession       CashSession        @relation(fields: [cashSessionId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  operationId       String             @unique @db.Uuid
+  operation         InventoryOperation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  refund            Refund?
+
+  @@unique([id, orderId])
+  @@index([cashSessionId, method, recordedAt])
+}
+
+model Refund {
+  id                      String             @id @default(uuid()) @db.Uuid
+  paymentId               String             @unique @db.Uuid
+  payment                 Payment            @relation(fields: [paymentId, orderId], references: [id, orderId], onDelete: Restrict, onUpdate: NoAction)
+  orderId                 String             @unique @db.Uuid
+  order                   Order              @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  amountCents             BigInt
+  method                  PaymentMethod
+  reason                  String             @db.VarChar(32)
+  externalRefundConfirmed Boolean
+  actorId                 String             @db.Uuid
+  actor                   User               @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  recordedAt              DateTime           @db.Timestamptz(3)
+  cashSessionId           String             @db.Uuid
+  cashSession             CashSession        @relation(fields: [cashSessionId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  operationId             String             @unique @db.Uuid
+  operation               InventoryOperation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([paymentId, orderId])
+  @@index([cashSessionId, method, recordedAt])
+}
+
+model OrderEvent {
+  id        String      @id @default(uuid()) @db.Uuid
+  orderId   String      @db.Uuid
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  type      String      @db.VarChar(32)
+  state     OrderStatus
+  reason    String?     @db.VarChar(32)
+  actorId   String      @db.Uuid
+  actor     User        @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  createdAt DateTime    @db.Timestamptz(3)
+
+  @@index([orderId, createdAt, id])
 }
 
 model ImportJob {

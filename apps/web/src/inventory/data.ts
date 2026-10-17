@@ -7,7 +7,11 @@ import {
 } from '@pommier/shared';
 import { authRequest, AuthError } from '../auth/api.js';
 export const formatUnits = (value: string) => new Intl.NumberFormat('pt-BR').format(BigInt(value));
-export function useStockCommand(route: string, onDone: (result: OperationResult) => void) {
+export function useStockCommand(
+  route: string,
+  onDone: (result: OperationResult) => void,
+  lookupBase = '/inventory/operations',
+) {
   const pending = useRef<{ key: string; payload: unknown } | null>(null);
   const active = useRef(false);
   const [busy, setBusy] = useState(false);
@@ -50,7 +54,7 @@ export function useStockCommand(route: string, onDone: (result: OperationResult)
     setBusy(true);
     try {
       const response = await authRequest(
-        `/inventory/operations/${pending.current.key}`,
+        `${lookupBase}/${pending.current.key}`,
         operationLookupSchema,
       );
       if (response.result) {

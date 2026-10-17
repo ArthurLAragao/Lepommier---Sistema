@@ -35,14 +35,14 @@ export const modules = [
     id: 'sales',
     label: 'Vendas',
     phase: 5,
-    available: false,
+    available: true,
     description: 'Vendas de balcão com pagamento, baixa de estoque e comprovante não fiscal.',
   },
   {
     id: 'orders',
     label: 'Pedidos',
     phase: 5,
-    available: false,
+    available: true,
     description: 'Pedidos do WhatsApp registrados manualmente, com reserva e retirada.',
   },
   {
@@ -51,7 +51,7 @@ export const modules = [
     phase: 3,
     available: true,
     description:
-      'Cadastros, perfis e preferências. Compras e pagamentos ainda não estão disponíveis.',
+      'Cadastros, perfis, preferências e histórico conectado de pedidos, compras e pagamentos.',
   },
   {
     id: 'products',
@@ -111,7 +111,7 @@ export type DatabaseStatus = z.infer<typeof databaseStatusSchema>;
 
 export const systemStatusSchema = z.object({
   version: z.string(),
-  phase: z.literal(4),
+  phase: z.literal(5),
   businessTimezone: z.literal(BUSINESS_TIMEZONE),
   businessDate: businessDateSchema,
   timestamp: z.iso.datetime(),

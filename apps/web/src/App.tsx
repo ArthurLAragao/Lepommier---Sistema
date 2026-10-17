@@ -46,6 +46,7 @@ import Customers from './registry/Customers.js';
 import Catalog from './registry/Catalog.js';
 import Inventory from './inventory/Inventory.js';
 import Production from './inventory/Production.js';
+import Orders from './sales/Orders.js';
 import { AccountSettings } from './auth/AccountSettings.js';
 import { getSystemStatus, RequestError } from './api.js';
 import {
@@ -253,7 +254,9 @@ export default function App({
                   (module.id !== 'customers' ||
                     hasPermission(current.user.role, 'customers.read')) &&
                   (module.id !== 'production' ||
-                    hasPermission(current.user.role, 'production.manage')),
+                    hasPermission(current.user.role, 'production.manage')) &&
+                  (!['sales', 'orders'].includes(module.id) ||
+                    hasPermission(current.user.role, 'orders.read')),
               )
               .map((module) => {
                 const Icon = icons[module.id];
@@ -330,8 +333,9 @@ export default function App({
             >
               <p>
                 Clientes, catálogo, produção e estoque de produtos prontos estão disponíveis
-                conforme seu perfil. Vendas, pagamentos e caixa ainda não estão habilitados. Não há
-                dados fictícios apresentados como registros reais.
+                conforme seu perfil. Vendas, pedidos e pagamentos manuais também estão disponíveis;
+                caixa tem apenas abertura/vínculo, sem encerramento ou reconciliação. Não há dados
+                fictícios apresentados como registros reais.
               </p>
               <p>
                 A identidade visual é provisória. A conexão local é verificada pelo aplicativo;
@@ -408,6 +412,15 @@ export default function App({
             )
           ) : active === 'products' ? (
             <Catalog current={current} />
+          ) : active === 'sales' || active === 'orders' ? (
+            hasPermission(current.user.role, 'orders.read') ? (
+              <Orders current={current} sales={active === 'sales'} />
+            ) : (
+              <EmptyState
+                title="Acesso restrito"
+                description="Seu perfil não acessa vendas, pedidos ou pagamentos."
+              />
+            )
           ) : active === 'inventory' ? (
             <Inventory current={current} />
           ) : active === 'production' ? (
@@ -463,24 +476,24 @@ export default function App({
                       : 'Aguardando a data do sistema local'}
                   </span>
                 </div>
-                <Badge>Operação ainda não habilitada</Badge>
+                <Badge>Painel consolidado ainda não disponível</Badge>
               </div>
               <div className="metric-grid">
                 {[
                   {
                     label: 'Vendas concluídas',
                     icon: ShoppingBasket,
-                    detail: 'Após ativação das vendas',
+                    detail: 'Consolidação disponível na fase de relatórios',
                   },
                   {
                     label: 'Pagamentos recebidos',
                     icon: ArrowDownLeft,
-                    detail: 'Após ativação dos pagamentos',
+                    detail: 'Consolidação disponível na fase de relatórios',
                   },
                   {
                     label: 'Pedidos para retirada',
                     icon: ShoppingBag,
-                    detail: 'Após ativação dos pedidos',
+                    detail: 'Consulte a lista de pedidos',
                   },
                   { label: 'Situação do caixa', icon: Wallet, detail: 'Após ativação do caixa' },
                 ].map(({ label, icon: Icon, detail }) => (
@@ -578,7 +591,7 @@ export default function App({
                   </div>
                   <EmptyState
                     title="Sua rotina aparecerá aqui"
-                    description="O painel consolidado será disponibilizado com os módulos de vendas e pedidos. Consulte Produção e Estoque para os registros atuais."
+                    description="O painel consolidado depende da fase de relatórios. Consulte os módulos disponíveis conforme seu perfil para os registros atuais."
                     icon={<Store size={28} strokeWidth={1.2} />}
                   />
                   <div className="activity-note">
@@ -699,8 +712,9 @@ function SettingsPage({
         <div className="info-note">
           <ShieldCheck size={19} aria-hidden="true" />
           <p>
-            Clientes, catálogo, produção e estoque já estão disponíveis conforme seu perfil. Vendas,
-            pagamentos e caixa dependem das próximas etapas de implementação.
+            Clientes, catálogo, produção, estoque, vendas e pedidos estão disponíveis conforme seu
+            perfil. Pagamentos são confirmados manualmente. Caixa possui base limitada de abertura;
+            encerramento, reconciliação e relatórios completos dependem das próximas fases.
           </p>
         </div>
         {status?.database.status !== 'ready' && (

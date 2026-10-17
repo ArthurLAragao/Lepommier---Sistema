@@ -66,7 +66,17 @@ export type SecurityEvent =
   | 'STOCK_RECONCILED'
   | 'STOCK_RESERVED'
   | 'STOCK_RELEASED'
-  | 'STOCK_CONSUMED';
+  | 'STOCK_CONSUMED'
+  | 'ORDER_CREATED'
+  | 'ORDER_EDITED'
+  | 'ORDER_CONFIRMED'
+  | 'ORDER_PREPARING'
+  | 'ORDER_READY'
+  | 'PAYMENT_RECORDED'
+  | 'ORDER_FULFILLED'
+  | 'ORDER_CANCELLED'
+  | 'REFUND_RECORDED'
+  | 'CASH_OPENED';
 type Tx = Prisma.TransactionClient;
 export async function securityLock(tx: Tx) {
   await tx.$queryRaw`SELECT "id" FROM "InstallationState" WHERE "id" = 1 FOR UPDATE`;

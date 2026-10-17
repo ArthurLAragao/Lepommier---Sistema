@@ -37,6 +37,17 @@ import { AppError } from '../errors.js';
 type Tx = Prisma.TransactionClient;
 type Actor = { id: string; role: Role };
 type Kind =
+  | 'SALE_CHECKOUT'
+  | 'ORDER_CREATE'
+  | 'ORDER_EDIT'
+  | 'ORDER_CONFIRM'
+  | 'ORDER_PREPARE'
+  | 'ORDER_READY'
+  | 'ORDER_PAY'
+  | 'ORDER_HANDOVER'
+  | 'ORDER_CANCEL'
+  | 'ORDER_REFUND'
+  | 'CASH_OPEN'
   | 'OPENING'
   | 'RECEIPT'
   | 'PLAN'
@@ -50,6 +61,17 @@ type Kind =
   | 'RELEASE'
   | 'CONSUME';
 const permissionFor: Record<Kind, Permission> = {
+  SALE_CHECKOUT: 'orders.checkout',
+  ORDER_CREATE: 'orders.write',
+  ORDER_EDIT: 'orders.write',
+  ORDER_CONFIRM: 'orders.write',
+  ORDER_PREPARE: 'orders.write',
+  ORDER_READY: 'orders.write',
+  ORDER_PAY: 'orders.pay',
+  ORDER_HANDOVER: 'orders.handover',
+  ORDER_CANCEL: 'orders.cancel',
+  ORDER_REFUND: 'orders.refund',
+  CASH_OPEN: 'cash.open',
   OPENING: 'inventory.opening',
   RECEIPT: 'inventory.receive',
   PLAN: 'production.manage',
@@ -207,8 +229,12 @@ export class InventoryService {
     void requestId;
     return result;
   }
-  lookup(principal: Principal, key: string) {
-    return this.run(principal, 'inventory.operations', async (tx, actor) => {
+  lookup(
+    principal: Principal,
+    key: string,
+    permission: 'inventory.operations' | 'orders.operations' = 'inventory.operations',
+  ) {
+    return this.run(principal, permission, async (tx, actor) => {
       const op = await tx.inventoryOperation.findUnique({
         where: { actorId_key: { actorId: actor.id, key } },
         select: { kind: true, result: true },
@@ -221,10 +247,14 @@ export class InventoryService {
       };
     });
   }
-  async lockProducts(tx: Tx, ids: string[]) {
+  async lockProducts(tx: Tx, ids: string[], limit = 20) {
     const unique = [...new Set(ids)].sort();
-    if (!unique.length || unique.length > 20)
-      throw fail('STOCK_PRODUCT_LIMIT', 'Use de 1 a 20 produtos por transação.', 400);
+    if (!unique.length || unique.length > limit)
+      throw fail(
+        'STOCK_PRODUCT_LIMIT',
+        `Use de 1 a ${limit} produtos distintos por transação.`,
+        400,
+      );
     await tx.$queryRaw(
       Prisma.sql`SELECT "id" FROM "Product" WHERE "id" IN (${Prisma.join(unique)}) ORDER BY "id" FOR UPDATE`,
     );
@@ -316,6 +346,7 @@ export class InventoryService {
     reason: string,
     notes?: string | null,
     correctsMovementId?: string,
+    reservationId?: string,
   ) {
     const batch = await this.checkedBatch(tx, batchId);
     const after = batch.physical + BigInt(movementDirection(type)) * BigInt(quantity);
@@ -342,6 +373,7 @@ export class InventoryService {
         notes: notes ?? null,
         createdAt: this.clock(),
         ...(correctsMovementId ? { correctsMovementId } : {}),
+        ...(reservationId ? { reservationId } : {}),
       },
       select: { id: true },
     });
@@ -937,7 +969,13 @@ export class InventoryService {
       return this.reserveTx(tx, actor, input, requestId);
     });
   }
-  async reserveTx(tx: Tx, actor: Actor, input: z.infer<typeof reserveInput>, requestId: string) {
+  async reserveTx(
+    tx: Tx,
+    actor: Actor,
+    input: z.infer<typeof reserveInput>,
+    requestId: string,
+    orderItemId?: string,
+  ) {
     if (input.eligibilityThrough < this.today())
       throw fail('RESERVATION_DATE', 'A elegibilidade deve alcançar hoje ou uma data futura.', 400);
     const all = await tx.batch.findMany({
@@ -963,8 +1001,9 @@ export class InventoryService {
       data: {
         productId: input.productId,
         quantity: input.quantity,
-        sourceNamespace: 'INTERNAL',
+        sourceNamespace: orderItemId ? 'ORDER' : 'INTERNAL',
         sourceReference: input.sourceReference,
+        ...(orderItemId ? { orderItemId } : {}),
         eligibilityThrough: new Date(`${input.eligibilityThrough}T00:00:00Z`),
         actorId: actor.id,
         createdAt: this.clock(),
@@ -1057,97 +1096,122 @@ export class InventoryService {
     input: z.infer<typeof reservationAction>,
     requestId: string,
   ) {
-    return this.command(principal, action, key, input, requestId, async (tx, actor, op) => {
-      input = reservationAction.parse(input);
-      const reservation = await tx.inventoryReservation.findUnique({
-        where: { id: input.reservationId },
-        select: {
-          id: true,
-          productId: true,
-          sourceNamespace: true,
-          sourceReference: true,
-          status: true,
-          eligibilityThrough: true,
-          allocations: {
-            select: { id: true, batchId: true, allocated: true, released: true, consumed: true },
-            orderBy: { batchId: 'asc' },
-          },
+    input = reservationAction.parse(input);
+    return this.command(principal, action, key, input, requestId, (tx, actor, op) =>
+      this.reservationChangeTx(
+        tx,
+        actor,
+        op,
+        action,
+        { ...input, sourceNamespace: 'INTERNAL' },
+        requestId,
+      ),
+    );
+  }
+  /** Caller holds security/product/source/reservation/batch locks and validates the genuine business source. */
+  async reservationChangeTx(
+    tx: Tx,
+    actor: Actor,
+    op: string,
+    action: 'RELEASE' | 'CONSUME',
+    input: {
+      reservationId: string;
+      sourceNamespace: 'INTERNAL' | 'ORDER';
+      sourceReference: string;
+    },
+    requestId: string,
+  ) {
+    const reservation = await tx.inventoryReservation.findUnique({
+      where: { id: input.reservationId },
+      select: {
+        id: true,
+        productId: true,
+        sourceNamespace: true,
+        sourceReference: true,
+        status: true,
+        eligibilityThrough: true,
+        allocations: {
+          select: { id: true, batchId: true, allocated: true, released: true, consumed: true },
+          orderBy: { batchId: 'asc' },
         },
+      },
+    });
+    if (
+      !reservation ||
+      reservation.sourceNamespace !== input.sourceNamespace ||
+      reservation.sourceReference !== input.sourceReference
+    )
+      throw missing();
+    await this.lockProducts(tx, [reservation.productId]);
+    await tx.$queryRaw`SELECT "id" FROM "InventoryReservation" WHERE "id"=${reservation.id}::uuid FOR UPDATE`;
+    await this.lockBatches(tx, [reservation.productId]);
+    const next = action === 'RELEASE' ? 'RELEASED' : 'CONSUMED';
+    if (reservation.status === next) return { targetId: reservation.id, state: next };
+    if (reservation.status !== 'ACTIVE')
+      throw fail('RESERVATION_CLOSED', 'Esta reserva já foi encerrada por outra operação.');
+    if (action === 'CONSUME') {
+      const product = await tx.product.findUniqueOrThrow({
+        where: { id: reservation.productId },
+        select: productSelect,
       });
-      if (
-        !reservation ||
-        reservation.sourceNamespace !== 'INTERNAL' ||
-        reservation.sourceReference !== input.sourceReference
-      )
-        throw missing();
-      await this.lockProducts(tx, [reservation.productId]);
-      await tx.$queryRaw`SELECT "id" FROM "InventoryReservation" WHERE "id"=${reservation.id}::uuid FOR UPDATE`;
-      await this.lockBatches(tx, [reservation.productId]);
-      const next = action === 'RELEASE' ? 'RELEASED' : 'CONSUMED';
-      if (reservation.status === next) return { targetId: reservation.id, state: next };
-      if (reservation.status !== 'ACTIVE')
-        throw fail('RESERVATION_CLOSED', 'Esta reserva já foi encerrada por outra operação.');
-      if (action === 'CONSUME') {
-        const product = await tx.product.findUniqueOrThrow({
-          where: { id: reservation.productId },
-          select: productSelect,
-        });
-        this.active(product);
-        for (const allocation of reservation.allocations) {
-          const batch = await this.checkedBatch(tx, allocation.batchId);
-          if (
-            !batchEligible(
-              dateOnly(batch.expiresAt),
-              this.today(),
-              dateOnly(reservation.eligibilityThrough)!,
-            )
-          )
-            throw fail(
-              'RESERVED_BATCH_EXPIRED',
-              'Lote reservado está vencido ou não atende à data. Libere e revise explicitamente a alocação; não houve substituição ou consumo.',
-            );
-        }
-      }
+      this.active(product);
       for (const allocation of reservation.allocations) {
         const batch = await this.checkedBatch(tx, allocation.batchId);
-        const quantity = allocation.allocated - allocation.released - allocation.consumed;
-        if (quantity <= 0)
-          throw fail('RESERVATION_DRIFT', 'Alocação inconsistente. Solicite conciliação.');
-        await tx.reservationAllocation.update({
-          where: { id: allocation.id },
-          data:
-            action === 'RELEASE'
-              ? { released: { increment: quantity } }
-              : { consumed: { increment: quantity } },
-        });
-        await tx.batch.update({
-          where: { id: batch.id },
-          data: { reserved: { decrement: BigInt(quantity) }, version: { increment: 1 } },
-        });
-        if (action === 'CONSUME')
-          await this.move(
-            tx,
-            actor,
-            op,
-            batch.id,
-            'CONSUMPTION',
-            quantity,
-            'INTERNAL_ALLOCATION_CONSUMED',
+        if (
+          !batchEligible(
+            dateOnly(batch.expiresAt),
+            this.today(),
+            dateOnly(reservation.eligibilityThrough)!,
+          )
+        )
+          throw fail(
+            'RESERVED_BATCH_EXPIRED',
+            'Lote reservado está vencido ou não atende à data. Libere e revise explicitamente a alocação; não houve substituição ou consumo.',
           );
       }
-      await tx.inventoryReservation.update({
-        where: { id: reservation.id },
-        data: { status: next, closedAt: this.clock(), version: { increment: 1 } },
+    }
+    for (const allocation of reservation.allocations) {
+      const batch = await this.checkedBatch(tx, allocation.batchId);
+      const quantity = allocation.allocated - allocation.released - allocation.consumed;
+      if (quantity <= 0)
+        throw fail('RESERVATION_DRIFT', 'Alocação inconsistente. Solicite conciliação.');
+      await tx.reservationAllocation.update({
+        where: { id: allocation.id },
+        data:
+          action === 'RELEASE'
+            ? { released: { increment: quantity } }
+            : { consumed: { increment: quantity } },
       });
-      await audit(
-        tx,
-        action === 'RELEASE' ? 'STOCK_RELEASED' : 'STOCK_CONSUMED',
-        requestId,
-        actor.id,
-        reservation.id,
-        this.clock(),
-      );
-      return { targetId: reservation.id, state: next };
+      await tx.batch.update({
+        where: { id: batch.id },
+        data: { reserved: { decrement: BigInt(quantity) }, version: { increment: 1 } },
+      });
+      if (action === 'CONSUME')
+        await this.move(
+          tx,
+          actor,
+          op,
+          batch.id,
+          'CONSUMPTION',
+          quantity,
+          'INTERNAL_ALLOCATION_CONSUMED',
+          undefined,
+          undefined,
+          reservation.id,
+        );
+    }
+    await tx.inventoryReservation.update({
+      where: { id: reservation.id },
+      data: { status: next, closedAt: this.clock(), version: { increment: 1 } },
     });
+    await audit(
+      tx,
+      action === 'RELEASE' ? 'STOCK_RELEASED' : 'STOCK_CONSUMED',
+      requestId,
+      actor.id,
+      reservation.id,
+      this.clock(),
+    );
+    return { targetId: reservation.id, state: next };
   }
 }

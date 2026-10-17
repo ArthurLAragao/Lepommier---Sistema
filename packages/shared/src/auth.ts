@@ -34,7 +34,26 @@ export type Permission =
   | 'inventory.reconcile'
   | 'inventory.reservations'
   | 'inventory.operations'
-  | 'production.manage';
+  | 'production.manage'
+  | 'orders.read'
+  | 'orders.write'
+  | 'orders.checkout'
+  | 'orders.pay'
+  | 'orders.handover'
+  | 'orders.cancel'
+  | 'orders.refund'
+  | 'orders.discount'
+  | 'orders.operations'
+  | 'cash.open';
+const orderOperations: Permission[] = [
+  'orders.read',
+  'orders.write',
+  'orders.checkout',
+  'orders.pay',
+  'orders.handover',
+  'orders.cancel',
+  'orders.operations',
+];
 const inventoryManagement: Permission[] = [
   'inventory.availability',
   'inventory.read',
@@ -56,6 +75,10 @@ const customerManagement: Permission[] = [
 ];
 const permissions: Record<Role, readonly Permission[]> = {
   OWNER: [
+    ...orderOperations,
+    'orders.refund',
+    'orders.discount',
+    'cash.open',
     ...inventoryManagement,
     'profile.self',
     'accounts.manage',
@@ -71,6 +94,9 @@ const permissions: Record<Role, readonly Permission[]> = {
     'catalog.cost',
   ],
   MANAGER: [
+    ...orderOperations,
+    'orders.discount',
+    'cash.open',
     ...inventoryManagement,
     'profile.self',
     ...customerManagement,
@@ -78,7 +104,13 @@ const permissions: Record<Role, readonly Permission[]> = {
     'catalog.manage',
     'catalog.cost',
   ],
-  CASHIER: ['profile.self', ...customerBasic, 'catalog.read', 'inventory.availability'],
+  CASHIER: [
+    ...orderOperations,
+    'profile.self',
+    ...customerBasic,
+    'catalog.read',
+    'inventory.availability',
+  ],
   PRODUCTION: [
     'profile.self',
     'catalog.read',

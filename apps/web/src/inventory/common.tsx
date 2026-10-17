@@ -184,10 +184,12 @@ export function CommandButtons({
   command,
   onClose,
   label = 'Confirmar movimentação',
+  disabled = false,
 }: {
   command: StockCommand;
   onClose: () => void;
   label?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="form-actions">
@@ -198,7 +200,7 @@ export function CommandButtons({
       >
         Cancelar
       </Button>
-      <Button type="submit" busy={command.busy} disabled={command.uncertain}>
+      <Button type="submit" busy={command.busy} disabled={command.uncertain || disabled}>
         {label}
       </Button>
     </div>

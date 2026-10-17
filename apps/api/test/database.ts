@@ -47,7 +47,9 @@ export function migrate(rawUrl: string, config?: string) {
     );
 }
 /** Fresh named DBs are retained. Never reset/drop the supplied database. */
-export async function freshDatabase(upgrade: boolean | 'identity' | 'registry' = false) {
+export async function freshDatabase(
+  upgrade: boolean | 'identity' | 'registry' | 'inventory' = false,
+) {
   const url = testUrl();
   const name = `pommier_${randomUUID().replaceAll('-', '').slice(0, 12)}_test`;
   const admin = new pg.Client({ connectionString: url.toString() });
@@ -65,6 +67,8 @@ export async function freshDatabase(upgrade: boolean | 'identity' | 'registry' =
     | undefined;
   let registryLegacy:
     { customerId: string; productId: string; categoryId: string; marketingId: string } | undefined;
+  let inventoryLegacy:
+    { batchId: string; reservationId: string; movementId: string; operationId: string } | undefined;
   if (!client) throw new Error('Test database client missing.');
   if (upgrade) {
     const path = resolve(projectRoot, 'data/test-runs', name);
@@ -77,7 +81,7 @@ export async function freshDatabase(upgrade: boolean | 'identity' | 'registry' =
       ),
     );
     writeFileSync(resolve(path, 'migrations/migration_lock.toml'), 'provider = "postgresql"\n');
-    if (upgrade === 'identity' || upgrade === 'registry') {
+    if (upgrade === 'identity' || upgrade === 'registry' || upgrade === 'inventory') {
       const identity = resolve(path, 'migrations/202610170002_identity');
       mkdirSync(identity, { recursive: true });
       writeFileSync(
@@ -87,13 +91,23 @@ export async function freshDatabase(upgrade: boolean | 'identity' | 'registry' =
         ),
       );
     }
-    if (upgrade === 'registry') {
+    if (upgrade === 'registry' || upgrade === 'inventory') {
       const registry = resolve(path, 'migrations/202610170003_registry');
       mkdirSync(registry, { recursive: true });
       writeFileSync(
         resolve(registry, 'migration.sql'),
         readFileSync(
           resolve(projectRoot, 'apps/api/prisma/migrations/202610170003_registry/migration.sql'),
+        ),
+      );
+    }
+    if (upgrade === 'inventory') {
+      const inventory = resolve(path, 'migrations/202610170004_inventory');
+      mkdirSync(inventory, { recursive: true });
+      writeFileSync(
+        resolve(inventory, 'migration.sql'),
+        readFileSync(
+          resolve(projectRoot, 'apps/api/prisma/migrations/202610170004_inventory/migration.sql'),
         ),
       );
     }
@@ -106,7 +120,7 @@ export async function freshDatabase(upgrade: boolean | 'identity' | 'registry' =
     await client.storeSettings.create({
       data: { id: 1, createdAt: new Date('2001-01-01T00:00:00Z') },
     });
-    if (upgrade === 'identity' || upgrade === 'registry') {
+    if (upgrade === 'identity' || upgrade === 'registry' || upgrade === 'inventory') {
       const { PasswordHasher } = await import('../src/auth/password.js');
       const { tokenDigest } = await import('../src/auth/security.js');
       const passwordHash = await new PasswordHasher().hash(randomUUID());
@@ -138,7 +152,7 @@ export async function freshDatabase(upgrade: boolean | 'identity' | 'registry' =
         },
       });
       legacy = { userId: user.id, passwordHash, initializedAt, sessionDigest };
-      if (upgrade === 'registry') {
+      if (upgrade === 'registry' || upgrade === 'inventory') {
         const customer = await client.customer.create({
           data: {
             name: 'Preserved synthetic customer',
@@ -180,9 +194,84 @@ export async function freshDatabase(upgrade: boolean | 'identity' | 'registry' =
           categoryId: category.id,
           marketingId: marketing.id,
         };
+        if (upgrade === 'inventory')
+          inventoryLegacy = await client.$transaction(async (tx) => {
+            const op = await tx.inventoryOperation.create({
+              data: {
+                actorId: user.id,
+                key: randomUUID(),
+                kind: 'OPENING',
+                requestDigest: 'a'.repeat(64),
+                createdAt: initializedAt,
+              },
+              select: { id: true },
+            });
+            const batch = await tx.batch.create({
+              data: {
+                productId: product.id,
+                reference: 'Legacy synthetic inventory',
+                referenceKey: 'legacy synthetic inventory',
+                source: 'OPENING',
+                actorId: user.id,
+                recordedAt: initializedAt,
+                expiresAt: new Date('2099-01-01'),
+                physical: 4n,
+                reserved: 2n,
+              },
+              select: { id: true },
+            });
+            const movement = await tx.inventoryMovement.create({
+              data: {
+                productId: product.id,
+                batchId: batch.id,
+                operationId: op.id,
+                actorId: user.id,
+                type: 'OPENING',
+                quantity: 4,
+                reason: 'INITIAL_COUNT',
+                createdAt: initializedAt,
+              },
+              select: { id: true },
+            });
+            const reservation = await tx.inventoryReservation.create({
+              data: {
+                productId: product.id,
+                quantity: 2,
+                sourceNamespace: 'INTERNAL',
+                sourceReference: randomUUID(),
+                eligibilityThrough: new Date('2098-12-31'),
+                actorId: user.id,
+                createdAt: initializedAt,
+              },
+              select: { id: true },
+            });
+            await tx.reservationAllocation.create({
+              data: {
+                productId: product.id,
+                reservationId: reservation.id,
+                batchId: batch.id,
+                allocated: 2,
+              },
+              select: { id: true },
+            });
+            await tx.inventoryOperation.update({
+              where: { id: op.id },
+              data: {
+                result: { operationId: op.id, targetId: batch.id, batchId: batch.id },
+                completedAt: initializedAt,
+              },
+              select: { id: true },
+            });
+            return {
+              batchId: batch.id,
+              reservationId: reservation.id,
+              movementId: movement.id,
+              operationId: op.id,
+            };
+          });
       }
     }
   }
   migrate(url.toString());
-  return { connection, client, url: url.toString(), legacy, registryLegacy };
+  return { connection, client, url: url.toString(), legacy, registryLegacy, inventoryLegacy };
 }
