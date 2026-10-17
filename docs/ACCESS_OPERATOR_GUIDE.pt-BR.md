@@ -1,15 +1,15 @@
 # Acesso local e administração da equipe
 
-Este guia cobre acesso e contas. Clientes e catálogo têm guia próprio; produção e estoque de unidades prontas estão descritos em INVENTORY_OPERATOR_GUIDE.pt-BR.md. Vendas, pedidos, pagamentos e caixa ainda não estão disponíveis. Não use esta versão como sistema completo de operação da loja.
+Este guia cobre acesso e contas. Clientes/catálogo e produção/estoque têm guias próprios. Vendas, pedidos e pagamentos manuais estão em SALES_OPERATOR_GUIDE.pt-BR.md; somente a abertura limitada do caixa existe, sem fechamento. Não use esta versão como sistema completo de operação da loja. **Neste computador, siga MANUAL_TESTING.pt-BR.md para iniciar o ambiente anterior preservado e a conferência separada da Fase 5; não execute o novo build contra o banco antigo sem migração/backup revisados.**
 
 ## Preparar o primeiro acesso
 
 1. O responsável técnico deve usar Node 24, instalar as dependências travadas, configurar o PostgreSQL local e guardar as credenciais do banco em `.env`, fora do Git. O banco deve estar em execução.
 2. Se estiver atualizando uma instalação, faça uma cópia verificável do banco pelo procedimento de manutenção existente. A ferramenta automática de backup/restauração ainda depende da Fase 8. Não apague registros, volumes ou migrações.
-3. Execute `npm run db:generate`, `npm run db:validate` e `npm run db:migrate`. As quatro migrações são aplicadas na ordem; as migrações anteriores são preservadas.
+3. Em banco novo dedicado, execute `npm run db:generate`, `npm run db:validate` e `npm run db:migrate`. As cinco migrações são aplicadas na ordem; as anteriores são preservadas. Para atualizar um banco existente, revise a migração e valide backup/restauração antes; o ambiente anterior deste computador permanece na Fase 4.
 4. Execute `npm run setup:secret`. O comando cria uma chave aleatória no arquivo privado `data/installation-secret`, sem mostrar seu conteúdo. Um arquivo existente nunca é substituído. Se `INSTALLATION_SECRET_FILE` estiver configurado, esse será o local utilizado.
 5. Restrinja o acesso à pasta e ao arquivo à conta do Windows que instala/executa o sistema. O modo de arquivo solicitado pelo programa não substitui as permissões ACL do Windows. Não deixe a chave em pasta compartilhada, controle de versão, capturas de tela, histórico de comandos ou logs.
-6. Inicie o aplicativo **depois** de criar a chave. Para desenvolvimento, `npm run dev` e `http://127.0.0.1:5173`. Para conferir os arquivos compilados, `npm run build`, `npm start` e `http://127.0.0.1:3333`.
+6. Em uma instalação nova com banco devidamente migrado, inicie o aplicativo **depois** de criar a chave. Para desenvolvimento, `npm run dev` e `http://127.0.0.1:5173`. Para conferir os arquivos compilados, `npm run build`, `npm start` e `http://127.0.0.1:3333`. O ambiente anterior preservado deste computador usa o lançador específico de MANUAL_TESTING.pt-BR.md.
 7. No próprio computador, o instalador autorizado abre o arquivo privado em um editor local e digita a chave no campo oculto “Chave de instalação”. A tela não baixa nem revela essa chave. Não a coloque no endereço do navegador, em armazenamento do navegador ou em mensagens.
 8. Escolha nome, usuário e senha do primeiro proprietário. O usuário usa 3 a 32 letras ASCII sem acentos, números, ponto, hífen ou sublinhado; o primeiro caractere deve ser letra ou número. Espaços externos são removidos e letras viram minúsculas. A senha tem 12 a 128 caracteres Unicode, preservando espaços e acentos; use uma senha exclusiva.
 9. Confirme uma vez. A tela passa para o login: entre com as credenciais escolhidas. Não existe usuário ou senha padrão.

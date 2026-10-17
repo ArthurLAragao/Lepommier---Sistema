@@ -1,3 +1,21 @@
+# Current Phase 5 coverage
+
+Acceptance status and actual counts are in PROGRESS.md; coverage alone does not assert a passing gate. All Phase 0–4 regressions remain enabled. Phase 5 adds 5 shared unit cases, 40 real PostgreSQL cases and 18 production-browser cases.
+
+| Required Phase 5 groups                                                                                                 | Evidence                                                                    |
+| ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Counter anonymous/linked, price review, discounts, atomic rollback, final units, duplicate retry, multi-product failure | Integration 1–8, 41; browser POS/price/lost-response                        |
+| WhatsApp suitable pickup, expiry block, cancellation/recreation, unpaid rejection, pay before/at pickup                 | Integration 9–14; browser draft/confirm/prepare/ready/payment/handover      |
+| Concurrent payment, payment/cancel, handover/cancel, double handover, release once                                      | Integration 15–19; browser payment/cancellation                             |
+| Paid cancellation full refund/release rollback, fulfilled no-restock refund, concurrent refunds                         | Integration 20–22, 41; browser paid cancellation/refunded fulfilled history |
+| Cash prerequisite, one opening, tender/change, electronic exclusion                                                     | Integration 23–26; browser explicit opening and payment fields              |
+| Role/PII/cost projections, revocation, CSRF/Origin/Host, stale edits, anonymization, product status                     | Integration 27–32; browser role/stale/history                               |
+| Ownership/financial SQL, clean/four-baseline upgrade preservation, Fortaleza boundaries                                 | Integration 33–36/database.ts; deploy/status/diff; Asia/Tokyo browser       |
+| Payload mismatch, uncertain lookup, zero-total rejection, ledger reconciliation                                         | Integration 37–40; genuinely committed browser response-loss retry/lookup   |
+| Portuguese forms/native dialogs, keyboard, 1366×768/390×844, Axe                                                        | Sales browser layout and retained regression suites                         |
+
+Full counted cash closing/movements/differences/review are Phase 6; reports Phase 7; verified full backup/restore/install Phase 8; human store-day/pilot Phase 9. Historical sections below describe previous checkpoints; then-pending Phase 5 entries are superseded above.
+
 # Required scenario matrix
 
 Status describes executed evidence, not intentions. Phases 0–4 are covered below; sales/payment/cash and later release scenarios remain intentionally unavailable. Current command results and gate status are in PROGRESS.md.

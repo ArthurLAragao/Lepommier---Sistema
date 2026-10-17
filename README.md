@@ -1,3 +1,5 @@
+> Current checkpoint: Phase 5 implementation and verification status are in [PROGRESS](docs/PROGRESS.md). Sales/orders/manual full payments/refunds and limited explicit cash opening extend the preserved Phase 0-4 foundation. Full Phase 6 closing/reconciliation and Phases 7-9 remain pending. This is not an operational store release. For this computer’s preserved Phase 4 manual DB and separate Phase 5 preview, use [manual startup instructions](docs/MANUAL_TESTING.pt-BR.md); do not point the new build at the unmigrated old DB.
+
 # Le Pommier · local store management
 
 An incremental, local-first implementation of the supplied Le Pommier brief. Interface: Brazilian Portuguese. Developer documentation: English. Business timezone: `America/Fortaleza`.
@@ -10,7 +12,7 @@ An incremental, local-first implementation of the supplied Le Pommier brief. Int
 2. In this directory run `npm ci`.
 3. Copy `.env.example` to `.env`, set a unique database password and update `DATABASE_URL` to match. Never commit `.env`.
 4. Start the local database (or `docker compose up -d db` for the supplied development service).
-5. Run `npm run db:generate`, `npm run db:validate`, then `npm run db:migrate`. All four migrations are applied additively; do not reset databases or delete earlier migrations.
+5. On a fresh dedicated database, run `npm run db:generate`, `npm run db:validate`, then `npm run db:migrate`. All five migrations are applied additively; do not reset databases or delete earlier migrations. Existing databases require a reviewed upgrade and verified backup/restore procedure first; this computer's preserved Phase 4 manual database is intentionally not upgraded.
 6. Run `npm run setup:secret` once before starting the app. It exclusively creates a random key in the private gitignored `data/installation-secret` file without printing it. Restrict local filesystem access; Windows ACLs need operator configuration.
 7. Run `npm run dev`. Open **http://127.0.0.1:5173**. The API listens on loopback port 3333; Vite proxies `/api`. The authorized installer reads the private key locally and enters it in the masked first-run form, choosing all owner credentials. Setup closes permanently; continue to login. No public registration/default credentials.
 
@@ -18,7 +20,7 @@ The interface gates access while checking installation/session state and shows a
 
 For a local production-asset preview, run `npm run build` then `npm start` and open **http://127.0.0.1:3333**. The start command selects production asset serving even if the development `.env` is present. This previews the current foundation; it is not a completed production store release.
 
-Leave PUBLIC_ORIGIN unset for these defaults, or set its exact local origin for the selected mode. Do not mix localhost/IP/IPv6 addresses. HTTP loopback uses HttpOnly/SameSite=Strict cookies without Secure; a reviewed HTTPS origin uses Secure. HTTPS/proxy/LAN deployment is not verified. One current session per account expires after 12 absolute hours; password/role/disabling changes revoke sessions. Later sales/payment/cash operations remain unavailable.
+Leave PUBLIC_ORIGIN unset for these defaults, or set its exact local origin for the selected mode. Do not mix localhost/IP/IPv6 addresses. HTTP loopback uses HttpOnly/SameSite=Strict cookies without Secure; a reviewed HTTPS origin uses Secure. HTTPS/proxy/LAN deployment is not verified. One current session per account expires after 12 absolute hours; password/role/disabling changes revoke sessions. Sales/orders/manual full payments/refunds are implemented in Phase 5; full cash closing/reconciliation remains unavailable.
 
 ## Commands
 

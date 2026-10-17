@@ -1,6 +1,6 @@
 # Metric definitions
 
-Only current inventory/batch reconciliation and production lists are implemented in Phase 4. The sales/payment/customer/cash/dashboard metrics below specify future queries, not working financial reports. No zero revenue/profit figures substitute for missing modules. Receipt purchase cost is a restricted historical snapshot; no discarded-cost/retail-loss report is calculated in this phase.
+Current inventory/batch reconciliation, production lists, order/sale history and customer-linked purchase/payment/refund history are implemented through Phase 5. General financial dashboards/reports and cash reconciliation below remain future queries. Customer fulfilled purchase total is the sum of linked FULFILLED order totals after discounts before refunds; last purchase uses fulfillment time. Payments and refunds are separate lifetime sums of their own records, including cancelled orders. Order intake is never added to fulfilled sales. This is only recorded system history. No zero revenue/profit figures substitute for missing modules. Receipt purchase cost is a restricted historical snapshot; no discarded-cost/retail-loss report is calculated in this phase.
 
 ## Implemented inventory quantities
 
@@ -43,3 +43,5 @@ Physical expected cash = opening float + cash payment net amounts + cash additio
 ## Required query checks
 
 Compare dashboard to underlying rows for every metric. Include boundary instants, future paid pickups, past-sale refunds, late movements, deactivated products, anonymous sales and cancelled orders. CSV exports use the same filters/definitions and backend permissions. Introduce charts only after matching tabular queries are implemented and tested.
+
+Phase 5 cash foundation records opening float and current-session payment/refund links; it does not calculate an accepted closing drawer figure. CASH receipts count order amount, not tender; change is tender minus amount. PIX/card never increase physical cash. Full refunds of old payments belong to their new recording session/date. No Phase 7 business reporting or profitability claim is made.

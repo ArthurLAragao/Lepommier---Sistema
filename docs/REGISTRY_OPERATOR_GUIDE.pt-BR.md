@@ -1,6 +1,6 @@
 # Guia de clientes e catálogo — Fase 3
 
-Este guia cobre clientes e catálogo. Produção e estoque de unidades prontas estão descritos em INVENTORY_OPERATOR_GUIDE.pt-BR.md. **Vendas, pedidos, pagamentos, dívida de cliente e fechamento de caixa ainda não estão implementados.** Consulte o estoque separado antes de afirmar disponibilidade; o cadastro sozinho não comprova saldo ou histórico de compras. Instalação/acesso/recuperação de senha continuam no ACCESS_OPERATOR_GUIDE.pt-BR.md.
+Este guia cobre clientes e catálogo. Produção/estoque estão em INVENTORY_OPERATOR_GUIDE.pt-BR.md; vendas, pedidos, pagamento manual e retirada em SALES_OPERATOR_GUIDE.pt-BR.md. **Dívida de cliente e fechamento de caixa não estão implementados.** Consulte a disponibilidade do estoque; o cadastro sozinho não comprova saldo. O perfil agora mostra apenas o histórico realmente registrado de pedidos, entregas, recebimentos e devoluções, separados. Instalação/acesso/recuperação de senha continuam no ACCESS_OPERATOR_GUIDE.pt-BR.md.
 
 ## Clientes
 
@@ -34,6 +34,6 @@ Em Produtos → **Novo produto**, informe código único, nome, categoria ativa,
 
 Use busca, filtros de categoria/origem/situação, ordenação e páginas de 20. Abra produto para consultar e editar. Desative marcando a situação no formulário e salvando com o motivo de alteração de preço quando necessário. Caixa/produção consultam apenas catálogo ativo, sem custo ou botões de edição. Não há upload de foto; o marcador neutro é intencional. Quantidades e disponibilidade são consultadas no módulo Estoque, não editadas no catálogo.
 
-Conflito de edição exige recarregar/revisar, como em clientes. Alterações de preço/custo registram responsável/data na auditoria. Preservar preços de vendas antigas será responsabilidade dos itens de pedido na fase de vendas, ainda não implementada.
+Conflito de edição exige recarregar/revisar, como em clientes. Alterações de preço/custo registram responsável/data na auditoria. Itens de pedidos/vendas preservam seus preços e nomes registrados; mudar o catálogo não altera essas cópias históricas. Carrinho ou rascunho com versão antiga exige revisão explícita.
 
 Em erro, anote a mensagem e o identificador de correlação, sem copiar dados pessoais ou senhas. Sessão expirada exige entrar novamente; dados de formulário não são gravados no armazenamento do navegador. Revise o resultado após qualquer interrupção antes de repetir operações.

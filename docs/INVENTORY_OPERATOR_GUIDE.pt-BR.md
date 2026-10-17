@@ -1,6 +1,10 @@
+# Atualização da Fase 5
+
+Vendas e Pedidos agora usam as reservas e o consumo existentes, com pagamento integral e vínculo real ao item do pedido. Consulte SALES_OPERATOR_GUIDE.pt-BR.md. As descrições futuras de pedidos no guia histórico abaixo foram substituídas por esse fluxo. Não há consumo avulso por botão nem reposição automática por devolução.
+
 # Produção e estoque de unidades prontas
 
-Esta versão registra produtos acabados, em unidades inteiras, em uma única loja. Clientes e catálogo já existem. Vendas, pedidos, pagamentos, caixa, ingredientes e receitas ainda não estão implementados. Não use esta etapa como uma versão completa para operar a loja. Nenhuma contagem real foi carregada automaticamente.
+Esta versão registra produtos acabados, em unidades inteiras, em uma única loja. Clientes, catálogo e fluxos da Fase 5 já existem. Fechamento de caixa, ingredientes e receitas não estão implementados. Não use esta etapa como uma versão completa para operar a loja. Nenhuma contagem real foi carregada automaticamente.
 
 ## Antes de registrar
 
@@ -27,7 +31,7 @@ Uma conclusão não pode ser apagada ou alterada. Se o produto foi desativado ou
 ## Ler os saldos e a validade
 
 - **Físico:** tudo registrado como presente, inclusive vencidos ainda não descartados.
-- **Reservado:** alocações pendentes. A base interna existe; pedidos de clientes ainda não estão disponíveis nesta versão.
+- **Reservado:** alocações pendentes, incluindo pedidos confirmados da Fase 5 e referências internas anteriores. Reserva não é consumo físico; cancelar libera, e entregar pedido pago consome.
 - **Disponível para venda:** somente unidades elegíveis e não reservadas. A venda em si ainda não existe.
 - **Bloqueado/vencido:** físico sem elegibilidade. Pode conter unidades reservadas vencidas; não some estas colunas como se fossem estoques separados.
 

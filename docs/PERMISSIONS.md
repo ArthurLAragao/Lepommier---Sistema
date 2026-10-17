@@ -1,6 +1,6 @@
 # Permission matrix
 
-The API enforces Phase 2 identity, Phase 3 registry and Phase 4 inventory permissions below. The remaining operational matrix specifies later modules; it does not claim those modules exist. A hidden/disabled UI control is not authorization. No default production credentials.
+The API enforces Phase 2 identity, Phase 3 registry, Phase 4 inventory and Phase 5 sales permissions below. The remaining operational matrix specifies later modules; it does not claim those modules exist. A hidden/disabled UI control is not authorization. No default production credentials.
 
 ## Enforced in Phase 2
 
@@ -54,9 +54,25 @@ Every registry service reauthorizes the actor/session inside the existing databa
 
 This explicitly narrows the former future “production and batch receipts” wording: production employees receive units only through production completion, never purchased receipts/opening/adjustments. Their waste scope is checked on the backend batch source. MANAGER cost visibility is an explicit extension consistent with existing catalog.cost; it is omitted from CASHIER/PRODUCTION database selects and DTOs. CASHIER cannot request inactive scopes or detailed batch/history/production paths. No inventory endpoint contains customer PII. Restricted roles cannot submit hidden costs or manipulate mutation routes.
 
-All services recheck current actor/session and permission under the shared security lock. Stock mutation, audit and operation result commit atomically. Cost fields are omitted rather than frontend hidden. Reservation allocation/release/consumption has no arbitrary HTTP mutation route; Phase 5 must validate a real business source and design cashier order permissions without granting unrestricted inventory consumption. See PHASE_4_DECISIONS.md and RESERVATION_CONTRACT.md.
+All services recheck current actor/session and permission under the shared security lock. Stock mutation, audit and operation result commit atomically. Cost fields are omitted rather than frontend hidden. Reservation allocation/release/consumption has no arbitrary HTTP mutation route; Phase 5 order services validate genuine OrderItem ownership without granting unrestricted cashier inventory consumption. See PHASE_4_DECISIONS.md and RESERVATION_CONTRACT.md.
 
-## Remaining operational matrix for Phases 5-9
+## Enforced in Phase 5
+
+| Named permission             | OWNER                                                       | MANAGER     | CASHIER     | PRODUCTION |
+| ---------------------------- | ----------------------------------------------------------- | ----------- | ----------- | ---------- |
+| orders.read                  | Order/sale details and necessary collection data            | Same        | Same        | No         |
+| orders.write                 | Create/edit/confirm/progress drafts/orders                  | Same        | Same        | No         |
+| orders.checkout              | Immediate full counter sale                                 | Same        | Same        | No         |
+| orders.pay / orders.handover | Full payment / eligible paid pickup                         | Same        | Same        | No         |
+| orders.cancel                | Unfulfilled; paid requires orders.refund                    | Unpaid only | Unpaid only | No         |
+| orders.discount              | Coded reason required                                       | Same        | No          | No         |
+| orders.refund                | Original-method full refund, explicit external confirmation | No          | No          | No         |
+| orders.operations            | Own key plus current operation permission                   | Same        | Same        | No         |
+| cash.open                    | Explicit opening/float                                      | Same        | No          | No         |
+
+Order list/detail selects exclude customer CPF/contact/address/private notes and product cost. Collection name/notes are necessary order-only fields; no customer PII snapshot. Production has no order queue or new customer endpoint. Customer history additionally requires customers.read; CASHIER cannot retrieve inactive/anonymized profiles, while authorized order-number history remains available without resurrecting identity. Cashier current-session DTO omits opening float. All writes use the existing transactional actor/session recheck and exact Origin/Host/CSRF. See PHASE_5_DECISIONS.md for lock ordering and the intentionally shared one-store cash-session policy. No unrestricted cashier reservation permission was added.
+
+## Remaining operational matrix for Phases 6-9 (future policy)
 
 | Capability                    | OWNER | MANAGER                         | CASHIER             | PRODUCTION      |
 | ----------------------------- | ----- | ------------------------------- | ------------------- | --------------- |
@@ -83,4 +99,4 @@ All services recheck current actor/session and permission under the shared secur
 
 One-time owner setup requires direct loopback plus a private file-delivered installation secret, exact Origin and required CSRF header. A database transaction closes it permanently while creating the owner; forwarded headers cannot authorize setup. Argon2id hashes, opaque digest-backed sessions, HttpOnly/SameSite=Strict/Path=/ cookies, 12-hour absolute expiry and logout invalidation are implemented. Secure applies to HTTPS; local HTTP is an explicit exception. A new login replaces old access. Password/role/activation changes revoke sessions. Missing/null Origin and missing/invalid CSRF header are rejected for every identity mutation. No CORS allowance or browser token storage.
 
-Persistent login budgets are eight attempts per normalized identifier and sixty per direct source per fixed ten-minute window, with temporary retries and bounded password work. Audit includes identity, customer changes/preferences/anonymization/import/export and catalog/price/cost events, with safe metadata. Discount/refund/cash audit remains pending those modules. See AUTH_SECURITY.md for exact behavior and the Portuguese access guide for local recovery. Future permissions must be enforced on each backend endpoint before enabling its UI.
+Persistent login budgets are eight attempts per normalized identifier and sixty per direct source per fixed ten-minute window, with temporary retries and bounded password work. Audit includes identity, customer changes/preferences/anonymization/import/export and catalog/price/cost events, with safe metadata. Order/discount/payment/refund/cash-opening audit is implemented with coded metadata and no personal-text snapshots. See AUTH_SECURITY.md for exact behavior and the Portuguese access guide for local recovery. Future permissions must be enforced on each backend endpoint before enabling its UI.

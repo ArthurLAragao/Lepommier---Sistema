@@ -1,3 +1,11 @@
+# Current Phase 5 order/reservation ownership
+
+ORDER reservations now have restrictive composite (orderItemId, productId, quantity) references to genuine OrderItem rows, sourceReference equal to that item ID, and at most one reservation per item. Existing INTERNAL references keep null orderItemId; no migration guesses an order or deletes legacy records. New consumption links the actual reservation/product and checks per-batch consumed allocation against ledger and operation target.
+
+SalesService reuses reserveTx/reservationChangeTx inside the same reauthorized transaction: security → operation → sorted products → order → current cash when financial → sorted reservations → sorted batches → allocation/ledger/projections/audit/result. Confirmation reserves all items through the pickup Fortaleza date; checkout additionally pays/consumes/fulfills atomically. Payment cannot bypass expiry or ownership. Cancellation releases the whole order; paid cancellation also records its original-method full refund atomically. Expired allocation resolves through cancellation/recreation, never silent reassignment. See PHASE_5_DECISIONS.md and ORDER_PAYMENT_POLICY.md. No arbitrary employee reservation/consume HTTP route is exposed.
+
+## Historical Phase 4 internal service contract (still supported for legacy INTERNAL records)
+
 # Internal reservation contract for Phase 5
 
 Phase 4 provides an internal InventoryService, with no reservation/consume HTTP mutation routes and no order tables. Synthetic integration tests call it inside isolated PostgreSQL. A UUID sourceReference is an **internal business reference**, not a fabricated order ID or an order foreign key. No ordinary employee screen creates reservations.

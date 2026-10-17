@@ -1,0 +1,9 @@
+# Limited cash foundation (Phase 5)
+
+Phase 5 requires real payment/refund session references. CashSession has immutable opening identity, actor, timestamp and integer-centavo float, with a database partial unique index allowing one active store session. OWNER/MANAGER explicitly open it inside Vendas/Pedidos; no seed, automatic opening or prerequisite bypass exists. Authorized sales operators share this one session. Each payment/refund still records its own actor. CASHIER cannot open it or see its opening float.
+
+Opening is actor/key/payload-bound and atomic with audit/result. Financial commands lock and validate the current session in the same reauthorized order transaction. Refunds use the current session, including refunds of older payments; historical sessions are never rewritten. CASH records tendered/change, but its receipt is only the full order total. PIX/DEBIT_CARD/CREDIT_CARD have no tender/change and do not represent physical cash. Payments/refunds are append-only restrictive records, not provider execution.
+
+There is no close endpoint, counted closing cash, reconciliation, differences, withdrawal, addition, expense, correction, cashier assignment or complete register reporting. The closedAt column reserves a later lifecycle; only isolated maintenance fixtures currently close a session to test old/current references. Do not use direct SQL to simulate daily closing. Caixa remains honestly unavailable as a full module.
+
+Phase 6 must design and test closing under the same lock order, frozen totals over payment/refund records, physical-cash versus electronic distinctions, later-session refunds, reasoned cash movements, authorized differences/review/corrections, assignment policy and safe restart behavior. Opening float is not revenue. Customer/history payment totals are not drawer reconciliation. See ORDER_PAYMENT_POLICY.md, PERMISSIONS.md and PHASE_5_DECISIONS.md.
