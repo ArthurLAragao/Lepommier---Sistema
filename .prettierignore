@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+package-lock.json
+apps/api/src/generated
+test-results
+playwright-report
+data
+backups
+docs/PROJECT_BRIEF.txt

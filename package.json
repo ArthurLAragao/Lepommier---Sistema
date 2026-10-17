@@ -1,0 +1,58 @@
+{
+  "name": "le-pommier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "prepare:workspace": "npm run db:generate && npm run build -w @pommier/shared",
+    "predev": "npm run db:generate",
+    "dev": "npm run build -w @pommier/shared && concurrently --kill-others-on-fail --names api,web \"npm run dev -w @pommier/api\" \"npm run dev -w @pommier/web\"",
+    "prebuild": "npm run db:generate",
+    "build": "npm run build -w @pommier/shared && npm run build -w @pommier/api && npm run build -w @pommier/web",
+    "start": "node --env-file-if-exists=.env scripts/start.mjs",
+    "pretypecheck": "npm run db:generate",
+    "typecheck": "npm run build -w @pommier/shared && npm run typecheck --workspaces --if-present && tsc -p tsconfig.tools.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "pretest": "npm run prepare:workspace",
+    "test": "vitest run --config vitest.config.ts",
+    "pretest:integration": "npm run prepare:workspace",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "pretest:e2e": "npm run build",
+    "test:e2e": "playwright test",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:test": "node --env-file-if-exists=.env scripts/migrate-test.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "concurrently": "9.2.5",
+    "dotenv": "17.4.2",
+    "eslint": "10.13.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "prisma": "7.10.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "4.1.12",
+    "vite": "7.3.7"
+  },
+  "overrides": {
+    "vite": "$vite"
+  }
+}

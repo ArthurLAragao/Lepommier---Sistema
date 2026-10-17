@@ -1,0 +1,1392 @@
+You are the lead software engineer, product designer, and QA engineer responsible for building Le Pommier’s internal store-management system.
+
+Work as a careful implementation agent, not merely as an advisor. Inspect the repository, create the application, run available checks, fix failures, and document what actually works.
+
+Build incrementally through the phases below. Do not attempt to generate the entire application in one uncontrolled pass.
+
+Do not claim the system is production-ready or bug-free simply because it compiles.
+
+==================================================
+1. PROJECT MISSION
+==================================================
+
+Build a desktop-first, local-first store-management system for Le Pommier, an artisanal sweets and savory-food store in Brazil.
+
+The system should replace paper records and give the owner a clear view of:
+
+- Customers and their purchase/payment histories.
+- Products.
+- Production.
+- Products purchased ready-made.
+- Stock availability.
+- Counter sales.
+- WhatsApp orders.
+- Payments.
+- Pickup status.
+- Waste.
+- Daily cash closing.
+- Daily and historical business performance.
+
+The primary product goal:
+
+“The owner can understand how the store performed without asking employees or reconstructing records from paper.”
+
+The primary operational goal:
+
+“Employees can register ordinary work quickly, accurately, and without depending on internet availability.”
+
+==================================================
+2. CONFIRMED BUSINESS CONTEXT
+==================================================
+
+Treat these as established requirements:
+
+- Sales happen at the counter and through WhatsApp.
+- There is no store-operated delivery service.
+- Customers may arrange Uber or another third party to collect an order.
+- Products are sold individually in version 1.
+- Some products are produced in-house.
+- Other products are purchased ready-made.
+- The store does not offer customer credit, installments, or payment deposits.
+- Up to five staff members may use the system.
+- Current operational records exist on paper.
+- Production, batch, and waste tracking are desired.
+- Internet connectivity is poor.
+- Version 1 must run on a store computer.
+- A mobile version is a later objective.
+- Do not require customers to create accounts.
+- Do not build a public online store in version 1.
+
+Payment policy clarification:
+
+Do not interpret “no credit” as “every WhatsApp order must already be paid when entered.”
+
+Allow an order to be entered before payment, but require full payment before marking it as handed over.
+
+For version 1:
+
+- No partial payments.
+- No deposits.
+- No installment schedules.
+- No informal customer-credit balances.
+- No split-tender payments.
+- One full successful payment per sale/order.
+- A separate full refund operation may reverse that payment.
+- Design payment records so a later expansion is possible without enabling unsupported workflows now.
+
+Document these as initial operational defaults that the owner can validate.
+
+==================================================
+3. LANGUAGE, LOCALE, AND UX
+==================================================
+
+Application interface:
+- Brazilian Portuguese.
+
+Code identifiers and developer documentation:
+- English, except where Portuguese examples improve operator documentation.
+
+Locale:
+- pt-BR.
+
+Currency:
+- BRL.
+
+Business timezone:
+- America/Fortaleza.
+
+Dates shown to users:
+- DD/MM/YYYY.
+
+Time:
+- 24-hour format.
+
+Money:
+- Brazilian formatting, for example R$ 25,90.
+
+Store timestamps consistently.
+Use the business timezone for reporting boundaries.
+Use actual business dates rather than assuming the browser timezone is correct.
+
+All user-facing errors must be understandable to a nontechnical employee.
+
+==================================================
+4. ARCHITECTURE: LOCAL OPERATION FIRST
+==================================================
+
+Build a local web application:
+
+- Frontend served locally.
+- Backend running locally.
+- PostgreSQL database running locally.
+- Browser-based desktop interface.
+- No cloud dependency for core operations.
+- No external CDN requirement.
+- No external font requirement.
+- No remote authentication dependency.
+- No external analytics requirement.
+- No runtime dependence on Instagram, WhatsApp, or payment-provider APIs.
+
+Internet may be needed for initial installation or updates.
+After installation, ordinary store operations must work without internet.
+
+Use this default stack:
+
+- TypeScript.
+- React.
+- Vite.
+- Tailwind CSS.
+- Accessible component primitives where useful.
+- Fastify backend.
+- Zod for request/configuration validation.
+- PostgreSQL.
+- Prisma ORM and migrations.
+- Vitest.
+- Backend integration tests against a dedicated PostgreSQL test database.
+- Playwright for end-to-end tests.
+- Docker Compose for the local database and production deployment.
+
+Use stable, mutually compatible package versions.
+Do not blindly install “latest” without checking compatibility.
+Commit the package lockfile.
+
+Repository structure:
+
+apps/
+  web/
+  api/
+packages/
+  shared/
+docs/
+scripts/
+
+Avoid microservices.
+
+Use clear backend modules with well-defined boundaries.
+
+Prefer a same-origin production deployment.
+In development, use a configured proxy where appropriate.
+
+The first release should work on one host computer.
+
+If optional LAN access is documented, explain its network/security requirements.
+Do not bind publicly by default.
+Do not expose PostgreSQL to the internet.
+Do not make cloud synchronization part of this project.
+
+A future mobile client must be able to reuse the API and business rules.
+
+Important limitation:
+
+A responsive layout does not mean a remote mobile application exists.
+Do not claim that a phone outside the store can connect to a local computer without additional infrastructure.
+
+==================================================
+5. BRAND AND VISUAL DIRECTION
+==================================================
+
+Brand:
+Le Pommier.
+
+Reported positioning:
+- Artisanal.
+- Warm.
+- Careful.
+- Family-oriented.
+- Connected to recipes, tradition, and shared memories.
+
+Brand phrase:
+“Cultivando receitas que viram memórias.”
+
+The supplied brand analysis is preliminary.
+
+No official palette, font family, or logo geometry has been verified.
+
+Do not:
+- Invent an official logo.
+- Claim proposed colors are official.
+- Treat an apple icon as the verified logo.
+- Copy Instagram interface styling as brand identity.
+- Invent historical or marketing claims beyond supplied material.
+
+Create an original provisional interface direction:
+
+- Warm neutral backgrounds.
+- Soft cream surfaces.
+- Dark, readable primary text.
+- Muted apple/leaf-inspired accent.
+- Restrained warm secondary accent.
+- Thin borders.
+- Subtle shadows.
+- Generous whitespace.
+- Simple typography.
+- Minimal animation.
+- Professional dashboard and POS styling.
+
+Suggested starting design tokens, explicitly marked provisional:
+
+--color-background: #F7F4EF
+--color-surface: #FFFFFF
+--color-surface-muted: #EFE9E0
+--color-primary: #45634A
+--color-primary-hover: #354D39
+--color-accent: #A95D4E
+--color-text: #252A25
+--color-text-muted: #62665F
+--color-border: #D9DCD3
+
+Adjust these if contrast testing requires it.
+
+Use a locally bundled, appropriately licensed font or a polished system-font stack.
+
+Use a text wordmark “Le Pommier” until a real logo asset is provided.
+
+Keep semantic status colors independent of brand colors.
+
+Interface principles:
+
+- Desktop-first.
+- Comfortable at 1366×768 and larger.
+- No unnecessary horizontal scrolling.
+- Clear navigation.
+- One obvious primary action per screen.
+- Large, readable totals.
+- Easy keyboard navigation.
+- Visible focus states.
+- Labels, not placeholder-only forms.
+- Accessible confirmation dialogs.
+- Status conveyed with text as well as color.
+- No decorative charts without operational value.
+- No crowded dashboard.
+- No marketing landing page in place of the actual application.
+
+Create reusable components for:
+- Buttons.
+- Inputs.
+- Search.
+- Filters.
+- Tables.
+- Pagination.
+- Empty states.
+- Error states.
+- Status badges.
+- Cards.
+- Dialogs.
+- Toasts.
+- Loading indicators.
+- Currency display.
+- Date/time display.
+- Permission-aware actions.
+
+==================================================
+6. INFORMATION ARCHITECTURE
+==================================================
+
+Main navigation:
+
+1. Visão geral
+2. Vendas
+3. Pedidos
+4. Clientes
+5. Produtos
+6. Produção
+7. Estoque
+8. Caixa
+9. Relatórios
+10. Configurações
+
+Do not show unfinished modules as if they are functional.
+Either implement them or label them clearly as unavailable.
+
+==================================================
+7. AUTHENTICATION AND PERMISSIONS
+==================================================
+
+Support individual employee accounts.
+
+No shared default administrator credentials.
+
+Provide a secure first-run setup for creating the owner account.
+After setup, disable unrestricted owner registration.
+
+Use established password hashing.
+Do not implement custom cryptography.
+
+Prefer server-managed sessions with:
+- HttpOnly cookies.
+- Appropriate SameSite configuration.
+- Environment-appropriate Secure flags.
+- Session expiry.
+- Logout invalidation.
+- CSRF protection appropriate to the chosen architecture.
+
+Do not store authentication tokens in localStorage.
+
+Implement login rate limiting.
+Do not log passwords, session tokens, or secrets.
+
+Roles:
+
+OWNER:
+- All operational access.
+- User management.
+- Settings.
+- Sensitive corrections.
+- Refund approvals.
+- Cash review.
+- Backup administration.
+
+MANAGER:
+- Operational management.
+- Production and inventory.
+- Closing review.
+- Explicitly allowed corrections.
+
+CASHIER:
+- Counter sales.
+- WhatsApp orders.
+- Necessary customer information.
+- Payment recording.
+- Assigned cash session.
+
+PRODUCTION:
+- Production queue.
+- Product recipes where available.
+- Production completion.
+- Batch and waste operations within allowed permissions.
+
+Enforce permissions on the backend.
+Hiding a button is not access control.
+
+Keep a documented role/permission matrix.
+
+==================================================
+8. CUSTOMER MODULE
+==================================================
+
+Fields:
+
+- Internal ID.
+- Display registration number.
+- Name.
+- Normalized phone.
+- Optional email.
+- Optional birthday.
+- Optional CPF.
+- Optional relevant notes.
+- Optional address for migration/reference, not a delivery requirement.
+- Marketing preference state.
+- Created/updated timestamps.
+- Active/inactive state where appropriate.
+
+Name should be required.
+Avoid requiring optional personal data without a real reason.
+
+Phone numbers:
+- Normalize input.
+- Display human-readable Brazilian formatting.
+- Allow the operator to review possible duplicates.
+- Do not assume phone number alone uniquely identifies a person.
+
+CPF:
+- Optional.
+- Validate format/check digits when supplied.
+- A validation result is not identity verification.
+- Restrict its visibility where appropriate.
+
+Marketing:
+- Use an explicit state such as UNKNOWN / OPTED_IN / OPTED_OUT.
+- Track when and how preferences were recorded.
+- Do not assume an existing customer agreed to promotions.
+
+Customer profile tabs:
+
+- Resumo.
+- Pedidos e compras.
+- Pagamentos e reembolsos.
+- Dados cadastrais.
+
+Show:
+- Purchase/order history.
+- Fulfilled purchase total under a documented definition.
+- Last purchase date.
+- Cancellation history.
+- Payment/refund history.
+
+Do not create a debt-collection module because customer credit is not offered.
+
+Support anonymous counter sales.
+
+CSV import:
+- Preview before import.
+- Column mapping.
+- Row-level validation.
+- Duplicate review.
+- Import summary.
+- No silent overwriting.
+- Protection against spreadsheet-formula injection in CSV exports.
+
+Do not invent an existing spreadsheet format.
+Provide a template and mapper.
+
+==================================================
+9. PRODUCT MODULE
+==================================================
+
+Fields:
+
+- SKU/internal code.
+- Name.
+- Category.
+- Description.
+- Optional photo stored locally.
+- Active state.
+- Origin: PRODUCED / PURCHASED / BOTH.
+- Selling price in integer centavos.
+- Optional estimated unit cost in integer centavos.
+- Stock-tracked flag.
+- Low-stock threshold.
+- Optional storage instructions.
+- Optional shelf-life reference.
+- Optional recipe reference.
+
+Version 1 quantities:
+- Whole individual units only.
+- No fractional quantity.
+- No weight-based checkout.
+
+Keep sales-unit handling isolated so other units can be added later.
+
+Price changes must not alter historical sale prices.
+
+Use soft deactivation for referenced products rather than destructive deletion.
+
+If product variants are implemented, give sellable variants explicit stock identities.
+Avoid ambiguous free-text variants affecting inventory.
+
+==================================================
+10. INVENTORY AND STOCK LEDGER
+==================================================
+
+Use an append-only stock movement ledger as the inventory source of truth.
+
+Do not make arbitrary edits to a product.quantity field the only inventory mechanism.
+
+Movement types should cover:
+
+- Opening stock.
+- Production receipt.
+- Purchased-product receipt.
+- Sale/fulfillment consumption.
+- Waste.
+- Authorized adjustment.
+- Explicit eligible return.
+
+Every movement should record:
+- Product.
+- Batch when applicable.
+- Quantity.
+- Movement type.
+- Timestamp.
+- Responsible user.
+- Source record.
+- Reason where required.
+
+Track:
+- Physical on-hand quantity.
+- Reserved quantity.
+- Available quantity.
+
+Available = on-hand minus reserved.
+
+Prevent negative available stock by default.
+
+Define concurrency handling so simultaneous operations cannot reserve or sell the same final units.
+
+Use database transactions and appropriate locking or conditional updates.
+Do not rely only on a frontend stock check.
+
+Important stock rules:
+
+- Completing production increases on-hand stock.
+- Receiving purchased products increases on-hand stock.
+- Confirming an order reserves available stock.
+- Cancelling an unfulfilled order releases reservations.
+- Handing over an order consumes its reservation and reduces on-hand.
+- Immediate counter sale records payment, fulfillment, and stock consumption atomically.
+- Merely recording payment for a future pickup does not physically remove stock.
+- Refunding a fulfilled sale does not automatically return food to sellable stock.
+
+For version 1, do not promise unavailable quantities.
+Do not implement backorders unless separately approved.
+
+Orders can be drafted without a reservation.
+Clearly distinguish draft from confirmed/reserved.
+
+Batch allocation:
+- Prefer earliest-expiring eligible batches.
+- Track expiration dates where relevant.
+- Do not invent food-safety shelf-life rules.
+- Let authorized users enter business-approved expiry information.
+- Treat expired batches as blocked from sale.
+- Keep an explicit workflow for recording their final disposal.
+
+==================================================
+11. PRODUCTION AND PURCHASE RECEIPTS
+==================================================
+
+Production workflow:
+
+- Planned production.
+- In progress.
+- Completed.
+- Cancelled.
+
+Record:
+- Product.
+- Planned quantity.
+- Actual completed quantity.
+- Responsible user.
+- Production date/time.
+- Batch identifier.
+- Expiration date if applicable.
+- Notes.
+- Production loss where relevant.
+
+Only completed production increases finished-product stock.
+
+Completing a production record must not create stock twice when retried.
+
+Allow planned and actual quantities to differ.
+
+Purchased-product receipt:
+
+- Supplier name/reference.
+- Product.
+- Quantity received.
+- Optional purchase unit cost.
+- Receipt date.
+- Batch reference.
+- Expiration date if applicable.
+- Responsible user.
+
+Do not pretend ingredient consumption or recipe costing is implemented before it actually is.
+
+Ingredient inventory and full recipes can be a later phase.
+Finished-product tracking must work independently.
+
+==================================================
+12. WASTE AND ADJUSTMENTS
+==================================================
+
+Waste reasons:
+
+- Expired.
+- Damaged.
+- Production failure.
+- Unsold/discarded.
+- Other, with explanation.
+
+Record:
+- Product.
+- Batch.
+- Quantity.
+- Reason.
+- User.
+- Timestamp.
+- Optional estimated cost impact.
+
+Waste reduces on-hand stock through a ledger entry.
+
+Do not label lost sales revenue as actual financial loss.
+Distinguish:
+- Estimated ingredient/product cost lost.
+- Potential retail value discarded.
+
+Prevent disposing of reserved quantities without resolving the affected reservations.
+
+Inventory adjustments require:
+- Permission.
+- Reason.
+- Before/after context.
+- Audit trail.
+
+==================================================
+13. COUNTER SALES
+==================================================
+
+Build a fast POS screen.
+
+Features:
+
+- Search products.
+- Category filters.
+- Product cards/list.
+- Available stock.
+- Cart.
+- Quantity controls.
+- Optional customer selection.
+- Clear subtotal.
+- Authorized discount.
+- Final total.
+- Payment method.
+- Confirm action.
+- Sale confirmation.
+- Optional locally printable non-fiscal receipt.
+
+Payment methods:
+- Cash.
+- Pix.
+- Debit card.
+- Credit card.
+
+Credit card means a card payment method, not store-provided customer credit.
+Do not implement store installment schedules.
+
+For cash:
+- Allow amount tendered.
+- Calculate change.
+- Record net sale amount as receipt, not the gross amount tendered.
+
+For Pix/card:
+- Label payment as manually confirmed by the employee.
+- Do not imply bank/provider verification.
+- Do not collect card numbers or security codes.
+
+An active cash session should be required for payment recording.
+
+A sale confirmation must atomically:
+- Validate permissions.
+- Validate current product availability.
+- Validate price/discount rules.
+- Create the sale/order.
+- Snapshot item names and prices.
+- Record payment.
+- Record fulfillment.
+- Write stock movements.
+- Record audit metadata.
+
+Use an idempotency key.
+A double-click or retry must not create a duplicate sale.
+
+Generate the idempotency key before submission and retain it while resolving an uncertain result.
+
+If connection fails after submission:
+- Show an explicit uncertain state.
+- Look up the operation by key.
+- Do not blindly repeat it as a new sale.
+
+==================================================
+14. WHATSAPP ORDERS AND PICKUP
+==================================================
+
+WhatsApp is an order source, not an API integration in version 1.
+
+Employees enter orders manually.
+
+Fields:
+
+- Customer.
+- Source: WHATSAPP / COUNTER.
+- Items.
+- Quantities.
+- Price snapshots.
+- Pickup date/time.
+- Notes.
+- Pickup person name, optional.
+- Third-party collection note, optional.
+- Payment state.
+- Fulfillment state.
+
+Do not build:
+- Delivery fees.
+- Drivers.
+- Routes.
+- Courier dispatch.
+- Delivery tracking.
+- Automatic WhatsApp messages.
+
+Suggested order states:
+
+- DRAFT.
+- CONFIRMED.
+- PREPARING.
+- READY.
+- FULFILLED.
+- CANCELLED.
+
+Keep payment state separate:
+- UNPAID.
+- PAID.
+- REFUNDED.
+
+Enforce valid transitions.
+
+Require full payment before FULFILLED.
+Allow payment at pickup.
+
+Once confirmed:
+- Reserve stock atomically.
+- Prevent silent item/price changes.
+- Use controlled amendments or cancellation/recreation rules.
+
+A paid order cannot be silently cancelled.
+Require an explicit refund/cancellation workflow.
+
+For a paid but unfulfilled order:
+- A full refund/cancellation releases its reservation.
+- Record financial effects in the current relevant cash session.
+
+For a fulfilled order:
+- Refund does not automatically restore food inventory.
+- Any eligible stock return requires an explicit separate decision and reason.
+
+Show pickup name as a plain operational note.
+Do not collect unnecessary third-party identity documents.
+
+==================================================
+15. CASH REGISTER
+==================================================
+
+Start with one store cash drawer and one active cash session at a time.
+
+Support:
+- Opening float.
+- Payments by method.
+- Cash additions.
+- Cash withdrawals.
+- Small cash expenses with category/reason.
+- Refunds by method.
+- Expected cash.
+- Counted closing cash.
+- Difference.
+- Closing notes.
+- Responsible users.
+
+Formula:
+
+Expected physical cash =
+opening float
++ net cash sales receipts
++ cash additions
+- cash refunds
+- cash withdrawals
+- cash expenses.
+
+Card/Pix payments must not increase physical drawer cash.
+
+No silent deletion of cash movements.
+
+Opening and closing must be transactional.
+
+After closing:
+- Preserve the closing snapshot.
+- Do not silently rewrite it.
+- Record later corrections through traceable adjustment workflows.
+- Require owner/manager authorization for sensitive corrections.
+
+Do not implement complete accounting.
+Clearly distinguish operational cash control from accounting.
+
+==================================================
+16. DASHBOARD AND REPORTS
+==================================================
+
+Define metrics before implementing charts.
+
+Dashboard:
+
+- Sales fulfilled today.
+- Gross fulfilled sales.
+- Discounts.
+- Net fulfilled sales before refunds.
+- Refunds recorded today.
+- Payments received today.
+- Receipts by method.
+- Pending unpaid pickup orders.
+- Production today.
+- Product quantities sold today.
+- Waste today.
+- Current stock alerts.
+- Upcoming pickups.
+- Current cash-session status.
+
+Important definitions:
+
+A future paid pickup may increase today’s receipts without increasing today’s fulfilled-sales value.
+
+A refund today for a past sale appears in today’s refund activity.
+Do not silently rewrite a previous closed cash session.
+
+Label order intake separately if shown.
+Do not add together order intake and fulfilled sales.
+
+Do not label receipts as profit.
+
+Do not show reliable net profit until costs, expenses, and applicable accounting policies are properly modeled.
+
+Reports:
+
+1. Daily operational summary.
+2. Sales by period.
+3. Sales by product.
+4. Receipts by payment method.
+5. Orders by source.
+6. Production by period.
+7. Waste by product/reason.
+8. Inventory movement.
+9. Cash-session history.
+10. Customer purchase history.
+
+Daily product reconciliation should include:
+- Opening on-hand.
+- Production receipts.
+- Purchased-product receipts.
+- Fulfilled sales consumption.
+- Waste.
+- Returns.
+- Adjustments.
+- Closing on-hand.
+- Reserved quantity separately.
+
+Use tabular reports before adding charts.
+Every chart must correspond to a clearly defined query/metric.
+
+Allow CSV export with permission checks and safe escaping.
+
+==================================================
+17. PRIVACY, AUDIT, AND SECURITY
+==================================================
+
+Collect only necessary personal data.
+
+Provide:
+- Restricted access to sensitive fields.
+- Controlled exports.
+- Explicit marketing-preference handling.
+- A documented correction/anonymization request workflow.
+- Retention considerations.
+
+Do not claim legal compliance solely because these features exist.
+
+Do not delete financial history just because a customer profile is anonymized.
+Separate customer identification from operational records where feasible.
+
+Audit high-impact actions:
+
+- Login/security events.
+- Permission changes.
+- Product price changes.
+- Discounts.
+- Refunds.
+- Cancellations.
+- Stock adjustments.
+- Cash corrections.
+- Customer exports.
+- Customer import.
+- Settings changes.
+
+Audit entries should include:
+- Actor.
+- Action.
+- Entity/reference.
+- Timestamp.
+- Reason where applicable.
+- Safe before/after information where useful.
+- Correlation ID.
+
+Exclude secrets and unnecessary personal information from logs.
+
+Validate uploaded files.
+Limit size and permitted formats.
+Store files safely outside executable paths.
+Prevent path traversal.
+
+Keep secrets in environment configuration.
+Commit .env.example, not actual secrets.
+
+==================================================
+18. BACKUP, RESTORE, AND OPERATIONS
+==================================================
+
+Implement a local backup mechanism for:
+- PostgreSQL data.
+- Uploaded assets.
+- Necessary configuration metadata, excluding plaintext secret exposure.
+
+Requirements:
+- Manual backup command.
+- Scheduled-backup setup instructions.
+- Configurable destination.
+- Retention policy.
+- Backup success/failure log.
+- Visible last-successful-backup status.
+- Version metadata.
+- Restore documentation.
+- Tested restore procedure.
+
+Explain explicitly:
+
+A backup stored only on the same physical disk is not sufficient protection against disk failure.
+
+Provide a procedure for copying backups to a separate device.
+Recommend encryption when backups contain customer information.
+Do not invent or hard-code encryption credentials.
+
+Restoration is a sensitive operation.
+Do not expose an unrestricted “restore database” endpoint to ordinary employees.
+
+Include:
+- Health check.
+- Database readiness check.
+- Graceful shutdown.
+- Startup instructions.
+- Stop instructions.
+- Update/migration instructions.
+- Pre-update backup procedure.
+- Disk/storage considerations.
+- Host-computer sleep/power warning.
+
+If the host computer is off, the application is unavailable.
+Document this plainly.
+
+==================================================
+19. DATA MODEL EXPECTATIONS
+==================================================
+
+Design and document entities before finalizing schema.
+
+Expected core entities:
+
+- User.
+- Session.
+- Customer.
+- CustomerMarketingPreference.
+- Category.
+- Product.
+- ProductionRecord.
+- Batch.
+- PurchasedProductReceipt.
+- InventoryMovement.
+- InventoryReservation.
+- Order.
+- OrderItem.
+- Payment.
+- Refund.
+- CashSession.
+- CashMovement.
+- AuditEvent.
+- IdempotencyRecord.
+- StoreSettings.
+- ImportJob.
+
+Use integer centavos for money.
+Use integer unit quantities.
+
+Use foreign keys and suitable constraints.
+
+Protect historical records from destructive cascades.
+
+Use optimistic versioning or equivalent safeguards for concurrent edits where appropriate.
+
+Avoid duplicating mutable totals without a reconciliation strategy.
+
+If cached stock balances are used for performance:
+- Keep the ledger authoritative.
+- Update within transactions.
+- Provide reconciliation checks.
+
+Create indexes based on actual access patterns.
+Do not add speculative complexity without a reason.
+
+==================================================
+20. IMPLEMENTATION PHASES
+==================================================
+
+PHASE 0 — REPOSITORY INSPECTION AND PLAN
+
+Tasks:
+- Inspect the existing repository.
+- Identify existing HTML/JS registry code and reusable assets.
+- Preserve useful work.
+- Do not overwrite unrelated files.
+- If the repository is empty, scaffold it.
+- Create docs/PRODUCT_REQUIREMENTS.md.
+- Create docs/ARCHITECTURE.md.
+- Create docs/BUSINESS_RULES.md.
+- Create docs/METRIC_DEFINITIONS.md.
+- Create docs/PERMISSIONS.md.
+- Create docs/IMPLEMENTATION_PLAN.md.
+- Create docs/ASSUMPTIONS.md.
+- Create docs/PROGRESS.md.
+
+Acceptance:
+- Requirements and assumptions are explicit.
+- Architecture supports local offline operation.
+- Existing assets are assessed rather than blindly discarded.
+
+PHASE 1 — FOUNDATION AND DESIGN SYSTEM
+
+Tasks:
+- Scaffold workspace.
+- Configure TypeScript.
+- Configure linting, formatting, tests, and build scripts.
+- Add database configuration.
+- Create application shell.
+- Create reusable UI components.
+- Implement provisional design tokens.
+- Add pt-BR formatting utilities.
+- Add structured API errors.
+- Add request correlation IDs.
+- Build navigation and representative empty states.
+
+Acceptance:
+- Application boots.
+- Frontend talks to backend.
+- Production assets are local.
+- No fake operational data is presented as real.
+
+PHASE 2 — AUTHENTICATION, USERS, AND CORE SCHEMA
+
+Tasks:
+- Implement first-run owner setup.
+- Implement sessions.
+- Implement permissions.
+- Create migrations.
+- Add audit infrastructure.
+- Add development-only seed fixtures.
+
+Acceptance:
+- Unauthorized API requests are rejected.
+- Role restrictions are tested.
+- No default production credentials exist.
+- Sessions behave correctly.
+
+PHASE 3 — CUSTOMERS AND PRODUCTS
+
+Tasks:
+- Customer CRUD with safe deactivation/anonymization considerations.
+- Search and pagination.
+- Customer profile.
+- Product/category CRUD.
+- Product pricing.
+- Local image support if included.
+- CSV import preview and duplicate review.
+- Historical-data foundations.
+
+Acceptance:
+- Validation works on frontend and backend.
+- Customer import errors are actionable.
+- Referenced products cannot be destructively removed.
+- Price changes preserve historical snapshots.
+
+PHASE 4 — STOCK, PRODUCTION, AND WASTE
+
+Tasks:
+- Stock ledger.
+- Opening stock.
+- Production lifecycle.
+- Purchased-product receipts.
+- Batch allocation.
+- Expiration blocking.
+- Waste.
+- Authorized adjustments.
+- Reservation foundations.
+
+Acceptance:
+- No accidental double receipt.
+- Ledger reconciles with current balances.
+- Concurrency tests cover last-unit allocation.
+- Waste and expiry behavior are tested.
+
+PHASE 5 — SALES, ORDERS, AND PAYMENTS
+
+Tasks:
+- Counter POS.
+- WhatsApp order entry.
+- Reservations.
+- Payment recording.
+- Pickup workflow.
+- Idempotency.
+- Full cancellation/refund workflow.
+- Non-fiscal receipt printing if feasible.
+
+Acceptance:
+- Complete counter sale works end to end.
+- Unpaid order cannot be handed over.
+- Duplicate submission creates one sale.
+- Payment failure creates no partial transaction.
+- Refund does not automatically restock food.
+- Manual Pix/card confirmation is labeled honestly.
+
+PHASE 6 — CASH SESSIONS
+
+Tasks:
+- Opening.
+- Cash additions/withdrawals/expenses.
+- Payment integration.
+- Refund integration.
+- Closing.
+- Difference explanations.
+- Historical review.
+
+Acceptance:
+- Cash/Pix/card remain distinct.
+- Change calculation is correct.
+- Closed sessions cannot be silently modified.
+- Closing reconciliation is covered by tests.
+
+PHASE 7 — DASHBOARD AND REPORTS
+
+Tasks:
+- Implement documented metrics.
+- Daily dashboard.
+- Reports and date filters.
+- CSV exports.
+- Product reconciliation.
+- Alerts.
+
+Acceptance:
+- Dashboard totals reconcile with underlying records.
+- Receipts are not mislabeled as sales/profit.
+- Refund timing is handled consistently.
+- Business-timezone date boundaries are tested.
+
+PHASE 8 — BACKUP, HARDENING, AND INSTALLATION
+
+Tasks:
+- Backup tooling.
+- Restore test.
+- Production Compose setup.
+- Local installation guide.
+- Startup/shutdown scripts.
+- Health checks.
+- Security review.
+- Dependency review.
+- Network-loss behavior.
+- Persistent-data verification after restart.
+
+Acceptance:
+- App works after disconnecting the internet.
+- Restart does not lose records.
+- Backup restores into a clean test environment.
+- Assets do not require external CDNs.
+- Deployment instructions are reproducible.
+
+PHASE 9 — USABILITY AND ACCEPTANCE REVIEW
+
+Tasks:
+- Run realistic store-day scenarios.
+- Review 1366×768 layout.
+- Check keyboard flows.
+- Check Portuguese copy.
+- Fix confusing forms and unnecessary clicks.
+- Review errors and empty states.
+- Document known limitations.
+- Prepare a pilot checklist.
+
+Acceptance:
+- A nontechnical employee can follow the operator guide.
+- Critical workflows pass.
+- No unresolved critical data-integrity/security issue is hidden.
+- Remaining limitations are disclosed.
+
+==================================================
+21. REQUIRED TEST SCENARIOS
+==================================================
+
+Automate appropriate tests for:
+
+1. Anonymous counter sale.
+2. Customer-linked sale.
+3. WhatsApp order paid at pickup.
+4. Attempted unpaid handover.
+5. Full payment before pickup.
+6. Order cancellation releasing reservation.
+7. Paid unfulfilled order refunded/cancelled.
+8. Fulfilled sale refund without automatic restock.
+9. Double-click sale submission.
+10. Retried production completion.
+11. Two users competing for the final unit.
+12. Expired batch blocked from sale.
+13. Waste exceeding eligible stock rejected.
+14. Reserved-stock disposal conflict.
+15. Product price update preserving old order totals.
+16. Unauthorized refund attempt.
+17. Unauthorized customer export.
+18. Cash payment with change.
+19. Pix/card excluded from physical cash.
+20. Cash closing discrepancy.
+21. Closed-session modification rejected.
+22. CSV import duplicate review.
+23. Malformed monetary and quantity input.
+24. Business-day boundaries in America/Fortaleza.
+25. Connection loss after sale submission.
+26. Application restart preserving records.
+27. Backup restoration.
+28. Dashboard/report reconciliation.
+29. Deactivated product retained in history.
+30. Local operation without internet.
+
+Run backend integration tests against PostgreSQL, not an in-memory substitute that conceals database behavior.
+
+Keep test data isolated from real store records.
+
+==================================================
+22. QUALITY RULES
+==================================================
+
+Do not:
+- Use localStorage as the operational database.
+- Build an attractive mockup with disconnected fake buttons.
+- Trust client-submitted totals.
+- Use floating-point money calculations.
+- Ignore database race conditions.
+- Swallow errors.
+- Disable tests to make CI pass.
+- Use broad “any” typing without justification.
+- Leave critical TODOs hidden.
+- Hard-code secrets.
+- Add unnecessary third-party services.
+- Auto-send messages.
+- Claim bank payment verification without an integration.
+- Claim fiscal compliance.
+- Claim official brand colors.
+- Claim mobile deployment already exists.
+- Deploy externally without authorization.
+
+Use:
+- Strict typing.
+- Shared validated contracts.
+- Database transactions.
+- Explicit state transitions.
+- Reusable UI components.
+- Meaningful error messages.
+- Safe logging.
+- Focused tests.
+- Small, understandable modules.
+- Documented architectural decisions.
+
+If an existing repository uses a different viable stack:
+- Explain the tradeoff before replacing it.
+- Prefer preserving working code where reasonable.
+- Do not force a rewrite purely for stylistic preference.
+
+==================================================
+23. WORKING METHOD AND CHECKPOINTS
+==================================================
+
+At the start:
+1. Inspect the repository and tooling.
+2. Present a short implementation sequence.
+3. Record assumptions.
+4. Begin Phase 0 and Phase 1.
+
+Proceed in dependency order.
+
+At the end of each phase:
+- Run relevant tests.
+- Run type checks.
+- Run linting.
+- Run the production build where applicable.
+- Fix failures introduced by your changes.
+- Update docs/PROGRESS.md.
+
+Report:
+- What was implemented.
+- Files/modules affected.
+- Commands actually run.
+- Test results.
+- Known limitations.
+- Next phase.
+
+Do not claim a command passed if it was not executed.
+
+If the environment prevents running a command:
+- State the exact blocker.
+- Keep the implementation honest.
+- Provide the precise command for later execution.
+- Do not fabricate successful results.
+
+Do not repeatedly ask permission for routine reversible coding steps.
+Ask only when a decision is genuinely blocking, destructive, security-sensitive, or materially changes scope.
+
+If the context window is becoming limited:
+- Update the progress and decision documents.
+- Leave a precise continuation point.
+- Do not rush unfinished phases.
+
+If git commits are used:
+- Keep them coherent and phase-focused.
+- Never commit secrets.
+- Do not push to a remote without authorization.
+
+==================================================
+24. FINAL DELIVERABLES
+==================================================
+
+Deliver:
+
+1. Working local application.
+2. Source code.
+3. Database migrations.
+4. Development-only demo fixtures.
+5. Automated tests.
+6. Production local deployment configuration.
+7. .env.example.
+8. Backup tooling.
+9. Restore procedure.
+10. Installation documentation.
+11. Operator guide in Brazilian Portuguese.
+12. Permission matrix.
+13. Business-rule documentation.
+14. Metric definitions.
+15. Known limitations.
+16. Pilot acceptance checklist.
+17. Future mobile/cloud migration notes.
+
+Future roadmap, not required for the operational first release:
+
+- Ingredient inventory.
+- Detailed recipe costing.
+- Supplier purchasing workflows.
+- Loyalty.
+- Birthday campaigns.
+- Promotional messaging.
+- Owner messaging summaries.
+- Remote mobile access.
+- Cloud hosting.
+- Payment-provider verification.
+- Fiscal integration.
+- Demand forecasting.
+
+Keep module boundaries ready for these additions.
+Do not pretend a placeholder is an implemented feature.
+
+==================================================
+25. DEFINITION OF SUCCESS
+==================================================
+
+The first release succeeds when:
+
+- Employees can register production and received products.
+- Stock is accurate and traceable.
+- Counter sales are fast.
+- WhatsApp orders can be entered and collected.
+- Payment and handover rules are enforced.
+- Customer histories are connected.
+- Waste is visible.
+- Cash closing reconciles.
+- The owner can understand the day from the dashboard.
+- The application operates without internet after installation.
+- Data survives restart.
+- Backups can actually be restored.
+- Sensitive actions are permission-controlled and audited.
+- Critical workflows have passing automated tests.
+- Known limitations are documented.
+
+Start now by inspecting the repository, creating the project documentation, and implementing the foundation.
+
+Do not stop after writing a plan.
+Do not attempt every phase in a single unverified code dump.
+Build, verify, document, and continue incrementally.

@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Phase 1 foundation metadata only. Operational entities are designed in
+// docs/ARCHITECTURE.md and added with Phase 2 migrations, not fake placeholders.
+model StoreSettings {
+  id               Int      @id @default(1)
+  businessTimezone String   @default("America/Fortaleza")
+  createdAt        DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @db.Timestamptz(3)
+}
