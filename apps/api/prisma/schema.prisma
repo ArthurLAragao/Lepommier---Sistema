@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
   moduleFormat = "esm"
 }
 
@@ -29,17 +29,19 @@ model InstallationState {
 }
 
 model User {
-  id              String       @id @default(uuid()) @db.Uuid
-  loginIdentifier String       @unique @db.VarChar(32)
-  displayName     String       @db.VarChar(80)
+  id              String                     @id @default(uuid()) @db.Uuid
+  loginIdentifier String                     @unique @db.VarChar(32)
+  displayName     String                     @db.VarChar(80)
   passwordHash    String
   role            Role
-  active          Boolean      @default(true)
-  version         Int          @default(1)
-  createdAt       DateTime     @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime     @updatedAt @db.Timestamptz(3)
+  active          Boolean                    @default(true)
+  version         Int                        @default(1)
+  createdAt       DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime                   @updatedAt @db.Timestamptz(3)
   sessions        Session[]
   auditEvents     AuditEvent[]
+  marketingEvents MarketingPreferenceEvent[]
+  importJobs      ImportJob[]
 }
 
 model Session {
@@ -75,4 +77,115 @@ model LoginThrottle {
   attempts        Int
 
   @@index([windowStartedAt])
+}
+
+enum MarketingState {
+  UNKNOWN
+  OPTED_IN
+  OPTED_OUT
+}
+
+enum ProductOrigin {
+  PRODUCED
+  PURCHASED
+  BOTH
+}
+
+enum ImportStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+model Customer {
+  id                 String                     @id @default(uuid()) @db.Uuid
+  registrationNumber Int                        @unique @default(autoincrement())
+  name               String                     @db.VarChar(120)
+  nameKey            String                     @db.VarChar(240)
+  phone              String?                    @db.VarChar(14)
+  email              String?                    @db.VarChar(254)
+  birthday           DateTime?                  @db.Date
+  cpf                String?                    @unique @db.VarChar(11)
+  address            String?                    @db.VarChar(300)
+  notes              String?                    @db.VarChar(1000)
+  active             Boolean                    @default(true)
+  anonymizedAt       DateTime?                  @db.Timestamptz(3)
+  marketingState     MarketingState             @default(UNKNOWN)
+  createdAt          DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime                   @updatedAt @db.Timestamptz(3)
+  version            Int                        @default(1)
+  marketingEvents    MarketingPreferenceEvent[]
+
+  @@index([nameKey, id])
+  @@index([phone])
+  @@index([email])
+  @@index([active, registrationNumber])
+}
+
+model MarketingPreferenceEvent {
+  id            String         @id @default(uuid()) @db.Uuid
+  customerId    String         @db.Uuid
+  customer      Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  actorId       String         @db.Uuid
+  actor         User           @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  previousState MarketingState
+  state         MarketingState
+  source        String         @db.VarChar(32)
+  reason        String         @db.VarChar(32)
+  evidence      String?        @db.VarChar(200)
+  createdAt     DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([customerId, createdAt])
+}
+
+model Category {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @db.VarChar(120)
+  nameKey   String    @unique @db.VarChar(240)
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
+  version   Int       @default(1)
+  products  Product[]
+}
+
+model Product {
+  id                  String        @id @default(uuid()) @db.Uuid
+  code                String        @unique @db.VarChar(32)
+  name                String        @db.VarChar(120)
+  nameKey             String        @db.VarChar(240)
+  categoryId          String        @db.Uuid
+  category            Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  description         String?       @db.VarChar(1000)
+  origin              ProductOrigin
+  sellingPriceCents   Int
+  estimatedCostCents  Int?
+  active              Boolean       @default(true)
+  storageInstructions String?       @db.VarChar(500)
+  shelfLifeReference  String?       @db.VarChar(300)
+  createdAt           DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime      @updatedAt @db.Timestamptz(3)
+  version             Int           @default(1)
+
+  @@index([categoryId, active])
+  @@index([nameKey, id])
+  @@index([active, origin])
+}
+
+model ImportJob {
+  id             String       @id @default(uuid()) @db.Uuid
+  actorId        String       @db.Uuid
+  actor          User         @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  tokenDigest    String       @db.Char(64)
+  status         ImportStatus @default(PENDING)
+  rowCount       Int
+  decisionDigest String?      @db.Char(64)
+  result         Json?
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+  expiresAt      DateTime     @db.Timestamptz(3)
+  closedAt       DateTime?    @db.Timestamptz(3)
+
+  @@index([status, expiresAt])
+  @@index([actorId, createdAt])
 }

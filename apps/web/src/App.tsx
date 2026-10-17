@@ -40,7 +40,10 @@ import {
   type SystemStatus,
   type CurrentUser,
   roleLabels,
+  hasPermission,
 } from '@pommier/shared';
+import Customers from './registry/Customers.js';
+import Catalog from './registry/Catalog.js';
 import { AccountSettings } from './auth/AccountSettings.js';
 import { getSystemStatus, RequestError } from './api.js';
 import {
@@ -242,7 +245,11 @@ export default function App({
         <nav aria-label="Navegação principal">
           <ul className="nav-list">
             {modules
-              .filter((module) => module.id !== 'settings')
+              .filter(
+                (module) =>
+                  module.id !== 'settings' &&
+                  (module.id !== 'customers' || hasPermission(current.user.role, 'customers.read')),
+              )
               .map((module) => {
                 const Icon = icons[module.id];
                 return (
@@ -317,8 +324,9 @@ export default function App({
               triggerIcon={<CircleHelp size={19} />}
             >
               <p>
-                As operações da loja ainda não estão habilitadas. Não há dados de demonstração
-                apresentados como registros reais.
+                Clientes e catálogo estão disponíveis conforme seu perfil. Vendas, estoque,
+                pagamentos e caixa ainda não estão habilitados. Não há dados fictícios apresentados
+                como registros reais.
               </p>
               <p>
                 A identidade visual é provisória. A conexão local é verificada pelo aplicativo;
@@ -345,9 +353,11 @@ export default function App({
               <p className="eyebrow">
                 {active === 'overview'
                   ? 'CUIDADO EM CADA DETALHE'
-                  : active === 'settings'
-                    ? 'SUA INSTALAÇÃO'
-                    : 'EM DESENVOLVIMENTO'}
+                  : active === 'customers' || active === 'products'
+                    ? 'CADASTROS DA LOJA'
+                    : active === 'settings'
+                      ? 'SUA INSTALAÇÃO'
+                      : 'EM DESENVOLVIMENTO'}
               </p>
               <h1 ref={headingRef} tabIndex={-1}>
                 {currentModule.label}
@@ -382,7 +392,18 @@ export default function App({
             />
           )}
 
-          {active === 'overview' ? (
+          {active === 'customers' ? (
+            hasPermission(current.user.role, 'customers.read') ? (
+              <Customers current={current} />
+            ) : (
+              <EmptyState
+                title="Acesso restrito"
+                description="Seu perfil não tem acesso ao cadastro de clientes."
+              />
+            )
+          ) : active === 'products' ? (
+            <Catalog current={current} />
+          ) : active === 'overview' ? (
             <>
               <section className="welcome-panel" aria-labelledby="welcome-title">
                 <div className="welcome-copy">
@@ -662,8 +683,8 @@ function SettingsPage({
         <div className="info-note">
           <ShieldCheck size={19} aria-hidden="true" />
           <p>
-            Mesmo com o banco conectado, os cadastros e as operações da loja dependem das próximas
-            etapas de implementação.
+            Clientes e catálogo já estão disponíveis conforme seu perfil. Vendas, estoque,
+            pagamentos e caixa dependem das próximas etapas de implementação.
           </p>
         </div>
         {status?.database.status !== 'ready' && (

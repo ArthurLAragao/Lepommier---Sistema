@@ -1577,6 +1577,215 @@ td strong {
   color: var(--color-text-muted);
   margin: 24px 0 0;
 }
+.registry-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  min-width: 0;
+}
+.registry-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.registry-toolbar h2 {
+  font-size: 1.2rem;
+  margin: 0 0 0.4rem;
+}
+.registry-toolbar p {
+  color: var(--text-muted, #5c655b);
+  margin: 0;
+}
+.registry-actions,
+.form-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.registry-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: start;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+.registry-filters > *,
+.category-picker > * {
+  min-width: 0;
+}
+.registry-filters .filter {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.registry-filters .filter select {
+  width: 100%;
+  min-width: 0;
+}
+.registry-filters .search,
+.category-picker .search {
+  width: 100%;
+  max-width: 100%;
+}
+.registry-table,
+.profile-card {
+  padding: 1.5rem;
+  min-width: 0;
+}
+.registry-table table {
+  min-width: 650px;
+}
+.registry-table .button-ghost {
+  text-align: left;
+  justify-content: flex-start;
+}
+.registration-number {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.form-grid,
+.profile-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.profile-details dt {
+  font-size: 0.8rem;
+  color: #586153;
+  margin-bottom: 0.4rem;
+}
+.profile-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.plain-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.field textarea {
+  width: 100%;
+  border: 1px solid #c8d1c0;
+  background: white;
+  color: inherit;
+  border-radius: 5px;
+  padding: 0.7rem;
+  font: inherit;
+  resize: vertical;
+}
+.field textarea:focus-visible {
+  outline: 3px solid #476147;
+  outline-offset: 2px;
+}
+.optional-fields {
+  border: 1px solid #d9ded1;
+  border-radius: 6px;
+  padding: 1rem;
+}
+.optional-fields summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+}
+.duplicate-review {
+  border: 1px solid #b8c7ac;
+  background: #f2f5ed;
+  border-radius: 6px;
+  padding: 1rem;
+}
+.duplicate-review h3 {
+  margin-top: 0;
+}
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.checkbox-label input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  accent-color: #476147;
+}
+.history-list {
+  padding-left: 1.2rem;
+}
+.history-list li {
+  margin: 0.8rem 0;
+}
+.history-list small {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #586153;
+}
+.category-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.7rem;
+  min-width: 0;
+  border: 1px solid #d9ded1;
+  border-radius: 6px;
+  padding: 0.8rem;
+}
+.category-picker legend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0 0.3rem;
+}
+.account-dialog:has(.import-wizard) {
+  width: min(72rem, calc(100vw - 2rem));
+  max-width: none;
+}
+.import-wizard {
+  min-width: 0;
+}
+.import-wizard .table-scroll {
+  max-height: 45vh;
+}
+.import-wizard td {
+  min-width: 130px;
+  vertical-align: top;
+}
+.import-wizard td p {
+  margin: 0.3rem 0;
+  max-width: 280px;
+  overflow-wrap: anywhere;
+}
+.product-neutral {
+  display: grid;
+  place-items: center;
+  min-height: 100px;
+  background: #f0f2e9;
+  border-radius: 6px;
+  color: #476147;
+  font-family: Georgia, serif;
+  letter-spacing: 0.08em;
+}
+@media (max-width: 650px) {
+  .form-grid,
+  .profile-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .registry-table,
+  .profile-card {
+    padding: 1rem;
+  }
+  .registry-actions {
+    width: 100%;
+  }
+  .registry-actions .button {
+    flex-grow: 1;
+  }
+  .registry-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .current-role {
   display: block;
   font-size: 11px;

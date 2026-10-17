@@ -19,6 +19,7 @@ Primary compatibility references reviewed during setup:
 | Fastify Cookie / native Argon2           | 11.1.3 / 2.2.2                  | Fastify 5 cookies and Argon2id executed on Windows x64 / Node 24.19.0                                |
 | Prisma CLI / Client / PostgreSQL adapter | 7.10.1 / 7.10.1 / 7.10.1        | Matching generator and runtime, schema validation, real PostgreSQL 17.10 migration/integration tests |
 | Zod                                      | 4.6.7                           | Shared contracts and safe request validation tests                                                   |
+| csv-parse                                | 7.0.3                           | Strict bounded CSV parser; quoted delimiters, escaped quotes, BOM and multiline records tested       |
 | Vitest / Playwright / Axe                | 4.1.12 / 1.64.1 / 4.14.0        | Executed source, database and browser/accessibility checks                                           |
 | ESLint / TypeScript ESLint               | 10.13.0 / 8.71.2                | Compatible peer ranges and executed lint                                                             |
 

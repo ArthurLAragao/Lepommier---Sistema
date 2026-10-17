@@ -10,11 +10,11 @@ An incremental, local-first implementation of the supplied Le Pommier brief. Int
 2. In this directory run `npm ci`.
 3. Copy `.env.example` to `.env`, set a unique database password and update `DATABASE_URL` to match. Never commit `.env`.
 4. Start the local database (or `docker compose up -d db` for the supplied development service).
-5. Run `npm run db:generate`, `npm run db:validate`, then `npm run db:migrate`. Both additive migrations are applied; do not reset a database or delete the original migration.
+5. Run `npm run db:generate`, `npm run db:validate`, then `npm run db:migrate`. All three migrations are applied additively; do not reset databases or delete earlier migrations.
 6. Run `npm run setup:secret` once before starting the app. It exclusively creates a random key in the private gitignored `data/installation-secret` file without printing it. Restrict local filesystem access; Windows ACLs need operator configuration.
 7. Run `npm run dev`. Open **http://127.0.0.1:5173**. The API listens on loopback port 3333; Vite proxies `/api`. The authorized installer reads the private key locally and enters it in the masked first-run form, choosing all owner credentials. Setup closes permanently; continue to login. No public registration/default credentials.
 
-The interface gates access while checking installation/session state and shows an actionable error if PostgreSQL/migrations are unavailable. A successful frontend build alone does not verify persistence or database behavior. See the [Portuguese access/operator guide](docs/ACCESS_OPERATOR_GUIDE.pt-BR.md) for setup, accounts and controlled local recovery, and [security policy](docs/AUTH_SECURITY.md) for sessions, CSRF/origin and secret handling.
+The interface gates access while checking installation/session state and shows an actionable error if PostgreSQL/migrations are unavailable. A frontend build alone does not verify persistence. See the [Portuguese access guide](docs/ACCESS_OPERATOR_GUIDE.pt-BR.md) for setup/accounts/recovery, [registry operator guide](docs/REGISTRY_OPERATOR_GUIDE.pt-BR.md) for customers/catalog, [CSV workflow](docs/CUSTOMER_CSV.md), [privacy policy](docs/CUSTOMER_PRIVACY.md) and [security policy](docs/AUTH_SECURITY.md). Customer and catalog data are implemented; stock, sales, payments and cash remain unavailable.
 
 For a local production-asset preview, run `npm run build` then `npm start` and open **http://127.0.0.1:3333**. The start command selects production asset serving even if the development `.env` is present. This previews the current foundation; it is not a completed production store release.
 

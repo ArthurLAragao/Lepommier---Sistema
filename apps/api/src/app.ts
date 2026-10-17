@@ -5,6 +5,7 @@ import fastifyStatic from '@fastify/static';
 import cookie from '@fastify/cookie';
 import { AuthService } from './auth/service.js';
 import { registerAuthRoutes } from './auth/routes.js';
+import { registerRegistryRoutes } from './registry/routes.js';
 import {
   APP_VERSION,
   BUSINESS_TIMEZONE,
@@ -75,12 +76,14 @@ export async function buildApp(options: AppOptions) {
     ? new AuthService(options.database.client, clock, options.installationSecret)
     : undefined;
   await app.register(
-    async (authApp) =>
-      registerAuthRoutes(authApp, {
+    async (authApp) => {
+      await registerAuthRoutes(authApp, {
         ...(auth ? { service: auth } : {}),
         origin: options.origin ?? 'http://127.0.0.1:3333',
         apiHost: options.apiHost ?? '127.0.0.1:3333',
-      }),
+      });
+      await registerRegistryRoutes(authApp, auth, clock);
+    },
     { prefix: '/api' },
   );
   if (auth) {
@@ -116,7 +119,7 @@ export async function buildApp(options: AppOptions) {
     const now = clock();
     return systemStatusSchema.parse({
       version: APP_VERSION,
-      phase: 2,
+      phase: 3,
       businessTimezone: BUSINESS_TIMEZONE,
       businessDate: businessDateOf(now),
       timestamp: now.toISOString(),

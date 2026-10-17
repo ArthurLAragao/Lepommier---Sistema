@@ -49,14 +49,15 @@ export const modules = [
     id: 'customers',
     label: 'Clientes',
     phase: 3,
-    available: false,
-    description: 'Cadastro, preferências e histórico de compras dos clientes.',
+    available: true,
+    description:
+      'Cadastros, perfis e preferências. Compras e pagamentos ainda não estão disponíveis.',
   },
   {
     id: 'products',
     label: 'Produtos',
     phase: 3,
-    available: false,
+    available: true,
     description: 'Catálogo, categorias, preços e origem dos produtos.',
   },
   {
@@ -110,7 +111,7 @@ export type DatabaseStatus = z.infer<typeof databaseStatusSchema>;
 
 export const systemStatusSchema = z.object({
   version: z.string(),
-  phase: z.literal(2),
+  phase: z.literal(3),
   businessTimezone: z.literal(BUSINESS_TIMEZONE),
   businessDate: businessDateSchema,
   timestamp: z.iso.datetime(),

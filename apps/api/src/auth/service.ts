@@ -40,7 +40,21 @@ export type SecurityEvent =
   | 'PASSWORD_CHANGED'
   | 'PASSWORD_RESET'
   | 'OWNER_RECOVERED'
-  | 'AUTHORIZATION_DENIED';
+  | 'AUTHORIZATION_DENIED'
+  | 'CUSTOMER_CREATED'
+  | 'CUSTOMER_UPDATED'
+  | 'CUSTOMER_STATUS_CHANGED'
+  | 'CUSTOMER_ANONYMIZED'
+  | 'MARKETING_CHANGED'
+  | 'CUSTOMER_IMPORT_PREVIEWED'
+  | 'CUSTOMER_IMPORTED'
+  | 'CUSTOMER_EXPORTED'
+  | 'CATEGORY_CREATED'
+  | 'CATEGORY_UPDATED'
+  | 'PRODUCT_CREATED'
+  | 'PRODUCT_UPDATED'
+  | 'PRODUCT_PRICE_CHANGED'
+  | 'PRODUCT_COST_CHANGED';
 type Tx = Prisma.TransactionClient;
 export async function securityLock(tx: Tx) {
   await tx.$queryRaw`SELECT "id" FROM "InstallationState" WHERE "id" = 1 FOR UPDATE`;
@@ -88,6 +102,20 @@ export class AuthService {
         return operation(tx);
       },
       { maxWait: 10000, timeout: 10000 },
+    );
+  }
+  async withPermission<T>(
+    principal: Principal,
+    permission: Permission,
+    operation: (tx: Tx, actor: { id: string; role: import('@pommier/shared').Role }) => Promise<T>,
+  ): Promise<T> {
+    return this.db.$transaction(
+      async (tx) => {
+        await securityLock(tx);
+        const actor = await this.authorize(tx, principal, permission);
+        return operation(tx, actor);
+      },
+      { maxWait: 10000, timeout: 20000 },
     );
   }
   async state() {

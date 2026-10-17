@@ -20,6 +20,29 @@ export interface AuthRoutesOptions {
   apiHost: string;
 }
 const COOKIE = 'pommier_session';
+export async function requireAccess(
+  auth: AuthService | undefined,
+  request: FastifyRequest,
+  permission: Permission = 'profile.self',
+) {
+  if (!auth)
+    throw new AppError(
+      503,
+      'IDENTITY_UNAVAILABLE',
+      'Configure e inicie o banco local antes de acessar.',
+    );
+  const session = await auth.session(request.cookies[COOKIE]);
+  const principal = { userId: session.userId, sessionId: session.id };
+  if (!hasPermission(session.user.role, permission)) {
+    await auth.denied(principal, permission, request.id);
+    throw new AppError(
+      403,
+      'FORBIDDEN',
+      'Seu perfil não permite esta operação. Procure o responsável pela loja.',
+    );
+  }
+  return { auth, session, principal };
+}
 export async function registerAuthRoutes(app: FastifyInstance, options: AuthRoutesOptions) {
   const cookie = {
     path: '/',
@@ -40,18 +63,7 @@ export async function registerAuthRoutes(app: FastifyInstance, options: AuthRout
     protectRequest(request, options.origin, options.apiHost);
   });
   async function authorize(request: FastifyRequest, permission: Permission = 'profile.self') {
-    const auth = service();
-    const session = await auth.session(request.cookies[COOKIE]);
-    const principal = { userId: session.userId, sessionId: session.id };
-    if (!hasPermission(session.user.role, permission)) {
-      await auth.denied(principal, permission, request.id);
-      throw new AppError(
-        403,
-        'FORBIDDEN',
-        'Seu perfil não permite esta operação. Procure o responsável pela loja.',
-      );
-    }
-    return { auth, session, principal };
+    return requireAccess(service(), request, permission);
   }
   const clear = (reply: FastifyReply) => reply.clearCookie(COOKIE, cookie);
   const idOf = (request: FastifyRequest) => z.object({ id: z.uuid() }).parse(request.params).id;

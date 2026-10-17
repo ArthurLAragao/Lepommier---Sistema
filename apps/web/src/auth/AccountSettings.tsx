@@ -33,7 +33,10 @@ export function Modal({
       ref={ref}
       className="dialog-content account-dialog"
       aria-labelledby="account-dialog-title"
-      onCancel={onClose}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       onClose={onClose}
     >
       <h2 id="account-dialog-title">{title}</h2>

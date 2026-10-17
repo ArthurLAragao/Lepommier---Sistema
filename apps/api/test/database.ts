@@ -47,7 +47,7 @@ export function migrate(rawUrl: string, config?: string) {
     );
 }
 /** Fresh named DBs are retained. Never reset/drop the supplied database. */
-export async function freshDatabase(upgrade = false) {
+export async function freshDatabase(upgrade: boolean | 'identity' = false) {
   const url = testUrl();
   const name = `pommier_${randomUUID().replaceAll('-', '').slice(0, 12)}_test`;
   const admin = new pg.Client({ connectionString: url.toString() });
@@ -60,6 +60,9 @@ export async function freshDatabase(upgrade = false) {
   url.pathname = `/${name}`;
   const connection = createDatabase(url.toString());
   const client = connection.client;
+  let legacy:
+    | { userId: string; passwordHash: string; initializedAt: Date; sessionDigest: string }
+    | undefined;
   if (!client) throw new Error('Test database client missing.');
   if (upgrade) {
     const path = resolve(projectRoot, 'data/test-runs', name);
@@ -72,6 +75,16 @@ export async function freshDatabase(upgrade = false) {
       ),
     );
     writeFileSync(resolve(path, 'migrations/migration_lock.toml'), 'provider = "postgresql"\n');
+    if (upgrade === 'identity') {
+      const identity = resolve(path, 'migrations/202610170002_identity');
+      mkdirSync(identity, { recursive: true });
+      writeFileSync(
+        resolve(identity, 'migration.sql'),
+        readFileSync(
+          resolve(projectRoot, 'apps/api/prisma/migrations/202610170002_identity/migration.sql'),
+        ),
+      );
+    }
     const config = resolve(path, 'baseline.config.ts');
     writeFileSync(
       config,
@@ -81,7 +94,40 @@ export async function freshDatabase(upgrade = false) {
     await client.storeSettings.create({
       data: { id: 1, createdAt: new Date('2001-01-01T00:00:00Z') },
     });
+    if (upgrade === 'identity') {
+      const { PasswordHasher } = await import('../src/auth/password.js');
+      const { tokenDigest } = await import('../src/auth/security.js');
+      const passwordHash = await new PasswordHasher().hash(randomUUID());
+      const initializedAt = new Date();
+      const user = await client.user.create({
+        data: {
+          loginIdentifier: 'preserved-owner',
+          displayName: 'Preserved synthetic owner',
+          role: 'OWNER',
+          passwordHash,
+        },
+      });
+      await client.installationState.update({ where: { id: 1 }, data: { initializedAt } });
+      const sessionDigest = tokenDigest(randomUUID());
+      await client.session.create({
+        data: {
+          userId: user.id,
+          tokenDigest: sessionDigest,
+          expiresAt: new Date(initializedAt.getTime() + 43200000),
+        },
+      });
+      await client.auditEvent.create({
+        data: {
+          eventType: 'SETUP_COMPLETED',
+          actorId: user.id,
+          targetId: user.id,
+          correlationId: randomUUID(),
+          metadata: {},
+        },
+      });
+      legacy = { userId: user.id, passwordHash, initializedAt, sessionDigest };
+    }
   }
   migrate(url.toString());
-  return { connection, client, url: url.toString() };
+  return { connection, client, url: url.toString(), legacy };
 }

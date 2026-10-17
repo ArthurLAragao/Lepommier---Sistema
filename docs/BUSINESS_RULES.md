@@ -34,6 +34,16 @@ Anonymous counter sales are supported. Registered customer name is required; pho
 
 Anonymization removes identification while retaining operational history under restricted access. Imports require preview, column mapping, row validation, duplicate decisions and a summary; no silent overwrite. Spreadsheet exports neutralize formula prefixes as well as escaping CSV syntax.
 
+## Phase 3 implemented registry rules
+
+Customer name is the sole required personal field. Full date-only birthdays from 1900 through today in Fortaleza are supported; day/month alone is refused. Brazilian phone normalization never invents digits and is nonunique. Email is trimmed/lowercased, optional and nonunique; CPF is optional, check-digit validated and uniquely bound even on inactive customers. Duplicate CPF requires review/skip; shared phone/email or advisory normalized-name match requires a coded reason to create separately. No merges or destructive customer deletion.
+
+Marketing defaults UNKNOWN and only OWNER changes it with source/reason/actor/time and optional evidence. OPTED_IN cannot use NO_EVIDENCE; record-review opt-in needs a reference. Imports never change marketing. There is no sending or legal-compliance claim. Deactivation is reversible; owner-only reasoned/confirmed anonymization clears identifying attributes/evidence, disables and sets OPTED_OUT, preserving IDs and safe history. Earlier downloads/backups are not rewritten. See CUSTOMER_PRIVACY.md.
+
+Categories have unique normalized names. Deactivation blocks new links, retains existing products and does not cascade active flags. Products use unique uppercase SKU, supported origin, whole-unit integer centavo pricing and optional restricted estimated cost; zero price requires explicit confirmation, negative/fractional money is rejected. Storage/shelf-life are text references only. Price/cost changes are audited. No quantity, availability, stock accounting or product photo upload exists. Future orders must snapshot prices; historical sales-price behavior remains unverified until sales exist.
+
+Version checks prevent stale customer/category/product updates, including status changes. Named backend permissions and transactional actor rechecks apply to reads, mutations and bulk CSV. Atomic imports create-or-skip, never update/merge; confirmation retries return the prior result. Export is owner-only/minimal/formula-safe/excludes anonymized customers. See CUSTOMER_CSV.md and PHASE_3_DECISIONS.md for exact bounds and policies.
+
 ## Integrity
 
 Transactions and database safeguards protect last-unit races, duplicate payment/completion, cash session opening/closing and first-run owner setup. Audit high-impact actions and permission changes without secrets/unnecessary personal data. Sensitive actions require backend authorization even if a UI button is hidden.

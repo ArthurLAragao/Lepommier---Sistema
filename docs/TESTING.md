@@ -1,4 +1,4 @@
-# Testing foundation and identity
+# Testing foundation, identity and registry
 
 Use Node 24 LTS and `npm ci`. Generated Prisma/shared outputs are prepared by hooks and are not committed. Do not run tests against store data, reset existing databases or disable failing checks. Test credentials are synthetic random values; no default production password exists.
 
@@ -32,7 +32,9 @@ The same explicit runtime/CLI runs the other npm commands. On another installati
 3. Run `npm run db:migrate:test`, then `npm run test:integration`.
 4. Stop the test instance afterward; retain/delete only explicitly reviewed disposable databases through a separate maintenance procedure. This suite never drops/resets the supplied database.
 
-The tests create uniquely named `_test` databases and apply real migrations. The upgrade test first applies **only** the original foundation migration, inserts a marker, applies the identity migration and verifies preservation. Other tests apply both migrations cleanly. They exercise setup races/closure, direct-peer policy/forward-header spoofing, login/cookies/digests, logout/replacement/expiry, revocation, all four roles, password reset/change, every mutation's CSRF/origin guard, last-owner concurrency, stale versions, five-account concurrency, persistent identifier/source throttling, API/audit secrecy, append-only audit, cleanup and the confirmed recovery CLI. Expiry uses an injected service clock, not sleeps. Synthetic account writes are isolated from store/development fixtures.
+The tests create uniquely named `_test` databases and apply real migrations. The foundation upgrade starts with **only** the original foundation migration and a marker, then applies all remaining migrations. Phase 3 adds an **identity-baseline upgrade** with existing owner/hash/session/audit, foundation marker and closed installation; registry preserves them all. Other tests apply all three migrations cleanly. Identity tests retain setup races/closure, loopback/forward spoofing, login/digests/cookies, logout/replacement/expiry, revocation, roles, password/recovery, CSRF/Origin, last-owner/five-account concurrency, throttling and audit safeguards. Expiry uses an injected clock, not sleeps. Fixtures remain isolated from store/development data.
+
+Phase 3 unit tests cover optional customer validation, phones, CPF, date-only birthdays, integer money, permissions, privacy query projections, strict CSV parsing/limits/mapping, normalized duplicates and formula-safe escaping. Real PostgreSQL registry tests cover CRUD, role projections and unauthorized paths, duplicate/CPF review, concurrent edit-status conflicts, marketing history/anonymization without audit PII, product-code races, category references, SQL constraints, every new mutation's CSRF/Origin, atomic import/retry/drift, expiry/restart, export and permission revocation ordered against writes/import. Browser response-loss simulation occurs only **after a real confirmation commits**; retry uses persisted results.
 
 The existing task-local portable harness runs PostgreSQL **17.10** bound to `127.0.0.1:55437`, uses a random private password file and stops the owned server in finally. From this task workspace:
 
@@ -40,7 +42,7 @@ The existing task-local portable harness runs PostgreSQL **17.10** bound to `127
 & 'C:\Users\Ryzen\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' work/verify-postgres.mjs
 ```
 
-The portable wrapper/runtime lives in `work/`, outside the application dependencies. It is an existing host-specific testing facility, not a production database installer. No global database service was installed. Tests retain fresh disposable DBs for investigation instead of resetting any existing DB.
+The portable wrapper/runtime lives in `work/`, outside application dependencies. It is host-specific testing infrastructure, not a production installer; no global service was installed. Fresh disposable databases are retained without resetting existing data. One expanded-run Windows disk checkpoint took about 25 seconds, beyond the old 20-second shutdown wait; PostgreSQL completed cleanly. The wrapper now allows up to 60 seconds without force-killing/deleting data. Check owned ports 55437/3333 are closed afterward.
 
 ## Browser gate
 
@@ -62,7 +64,7 @@ $env:RUN_POMMIER_E2E = '1'
 & 'C:\Users\Ryzen\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' work/verify-postgres.mjs
 ```
 
-Browser coverage retains all seven foundation checks and adds setup/double-submit, invalid/valid login, visible current user, account dialogs/role/state/password reset, own password change, Unicode rejection without truncation, CASHIER/PRODUCTION restrictions, server-expired session state, logout and narrow login. Expiry modifies only the isolated session timestamps then triggers normal focus revalidation; no authentication bypass exists in the app. Viewports: 1366×768 and 390×844. Keyboard/dialog containment, Escape/focus restoration, reduced motion, overflow, local assets, failure/retry and Axe WCAG 2/2.1 A/AA checks run. Browser timezone is Asia/Tokyo to preserve Fortaleza-date regression coverage.
+Browser coverage retains seven foundation and ten identity checks. Registry adds empty state/optional fields/validation, safe date/text/CPF profile, duplicates, stale-edit review, status changes, preference/confirmed anonymization, restricted roles/costs, category/product forms/prices, search/filter/pagination, CSV template/mapping/review/retry/cancellation, export and layout/Axe. Expiry modifies only isolated session timestamps and uses normal focus revalidation, with no app bypass. Viewports: 1366×768 and 390×844; keyboard/dialog containment, Escape/focus, reduced motion, overflow/assets/recovery remain checked. Browser timezone is Asia/Tokyo to verify date-only behavior. `00-auth` intentionally runs first on a fresh DB; registry fixtures follow setup.
 
 Passing Axe does not establish complete accessibility. Blocking external asset requests demonstrates local installed assets, not complete disconnected store operations. Full operational persistence, backup/restore and a human pilot remain Phases 8–9.
 

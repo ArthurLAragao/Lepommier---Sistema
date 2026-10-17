@@ -25,19 +25,25 @@ The preserved foundation migration creates StoreSettings. Additive migration `20
 
 Security-sensitive transactions lock the singleton row, reauthorize the actor, enforce account versions, preserve one active owner and serialize the five-active-account limit. Setup owner creation/closure and audit commit together. Real PostgreSQL tests exercise both clean application and an upgrade preserving an existing foundation record. See [AUTH_SECURITY.md](AUTH_SECURITY.md) for the implemented schema/security boundaries.
 
+## Implemented Phase 3 registry
+
+Additive `202610170003_registry` creates Customer (immutable sequence registration, optional identity, current marketing state, active/anonymized flags/version), separate MarketingPreferenceEvent provenance, Category, Product and metadata-only ImportJob. No stock/financial tables are introduced. Restrict/NoAction FKs preserve references; SQL checks/functions/triggers protect CPF/date/phone shape/money/identity/anonymization beyond Prisma's representable schema. Clean and identity-upgrade tests preserve existing data/closure/password/session/audit.
+
+RegistryService uses explicit role-specific database selects and the existing transactional actor/session recheck under the security lock. All mutations share the exact Host/Origin/CSRF scope. Versions reject concurrent stale edits. This local serialization also orders bulk confirmation against account revocation; it is a deliberate bounded five-account design, not a throughput scaling claim. CSV uses strict csv-parse with explicit mapping, bounded memory-only previews, server-bound confirmation and atomic/idempotent import. No raw CSV persists. Downloads are authenticated and short-lived in browser memory. See PHASE_3_DECISIONS.md, CUSTOMER_CSV.md and CUSTOMER_PRIVACY.md for constraints, retention and privacy projections.
+
+Current marketing state lives on Customer rather than a separate singleton preference table; history is separate. Anonymization scrubs optional evidence references while retaining non-identifying event provenance; it does not alter append-only AuditEvent. There are no PII audit snapshots. Category deactivation retains products and their flags. Prices/cost are integer centavos; future order items must snapshot prices. No stock fields, photo upload or fabricated availability are present.
+
 ## Future operational database design (not implemented)
 
-| Entity                                             | Relationships and safeguards                                                                                                |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Customer / CustomerMarketingPreference             | Separate optional identity and preference provenance; immutable history survives anonymization                              |
-| Category / Product                                 | Unique SKU, integer nonnegative centavos, positive whole units at operation boundaries, active flag, origin, stock tracking |
-| ProductionRecord / PurchasedProductReceipt / Batch | Batch product identity, optional expiry, completion source unique, actual quantity and responsible user                     |
-| InventoryMovement / InventoryReservation           | Signed ledger delta; source uniqueness; reservation state and allocated batch; responsible user/reason                      |
-| Order / OrderItem                                  | Source and state, separate payment state, immutable snapshots after confirmation, customer optional for counter             |
-| Payment / Refund                                   | One successful full payment per order, unique full refund reference, actor and current cash session                         |
-| CashSession / CashMovement                         | Partial unique index for single active session, append-only money movement, preserved closing snapshot                      |
-| Operational audit / IdempotencyRecord              | Reuse security audit conventions; actor/scope/key/request fingerprint/response binding                                      |
-| StoreSettings expansion / ImportJob                | Business timezone, operational defaults; import preview/mapping/review/results                                              |
+| Entity                                             | Relationships and safeguards                                                                                    |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| ProductionRecord / PurchasedProductReceipt / Batch | Batch product identity, optional expiry, completion source unique, actual quantity and responsible user         |
+| InventoryMovement / InventoryReservation           | Signed ledger delta; source uniqueness; reservation state and allocated batch; responsible user/reason          |
+| Order / OrderItem                                  | Source and state, separate payment state, immutable snapshots after confirmation, customer optional for counter |
+| Payment / Refund                                   | One successful full payment per order, unique full refund reference, actor and current cash session             |
+| CashSession / CashMovement                         | Partial unique index for single active session, append-only money movement, preserved closing snapshot          |
+| Operational audit / IdempotencyRecord              | Reuse security audit conventions; actor/scope/key/request fingerprint/response binding                          |
+| StoreSettings expansion                            | Future operational defaults; current bounded ImportJob is already implemented in Phase 3                        |
 
 Use foreign keys with RESTRICT for financial/catalog references. Avoid destructive cascades of historical records. Use version numbers for mutable customer/catalog edits and reject stale versions.
 
@@ -55,7 +61,7 @@ First-owner setup requires a private local 256-bit installation key, direct loop
 
 Backend authorization uses shared named permissions and transactional rechecks. Only OWNER administers accounts/reviews security events; every role manages its own password. Persistent source/identifier throttles and safe audit events are implemented. Public health/installation endpoints expose only non-sensitive status; protected account/session endpoints omit hashes/digests. Logs omit credentials and bodies. Development fixtures are explicit, guarded and separate. Recovery is a confirmed offline local CLI, not a reset endpoint. Details and operator procedure are in AUTH_SECURITY.md and ACCESS_OPERATOR_GUIDE.pt-BR.md.
 
-Restricted exports and business permissions arrive with later modules. Uploads, if implemented, must use size/type validation and generated names in a non-executable local directory. Backup/restore remains Phase 8 and must be an administrator procedure, never a general employee endpoint.
+Owner-only customer export/import and registry permissions are implemented in Phase 3. Other business permissions arrive with their modules. Photo uploads are omitted. Any future uploads must use size/type validation and generated names in a non-executable local directory. Backup/restore remains Phase 8 and must be an administrator procedure, never a general employee endpoint.
 
 ## Runtime and dependencies
 

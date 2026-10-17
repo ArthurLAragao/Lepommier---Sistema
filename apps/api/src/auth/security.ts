@@ -52,6 +52,18 @@ export function safeAuditMetadata(
     'version',
     'permission',
     'method',
+    'fields',
+    'count',
+    'scope',
+    'previousPrice',
+    'price',
+    'previousCost',
+    'cost',
+    'source',
+    'state',
+    'previousState',
+    'created',
+    'skipped',
   ]) {
     const value = input[key];
     if (typeof value === 'string') safe[key] = value.slice(0, 200);

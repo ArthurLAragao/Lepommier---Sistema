@@ -28,9 +28,17 @@
 
 ## Unknown, not guessed
 
-Foundation input guards currently accept business/report dates from 2000 through 2099, amounts from 0 through 99,999,999 centavos and positive quantities up to 100,000 whole units per input. Validate these bounds before historical migration or unusually large operations; they are not evidence of the store's actual catalog or history. Customer birthday validation must be designed separately rather than reusing the business-date lower bound.
+Foundation input guards accept business/report dates from 2000 through 2099, amounts from 0 through 99,999,999 centavos and positive quantities up to 100,000 whole units per input. These are not evidence of actual store activity. Phase 3 birthday validation is separate: complete date from 1900 through today's Fortaleza date; incomplete birthdays require an explicitly designed later representation.
 
 Existing customer spreadsheet columns, product catalog, prices, categories, suppliers, shelf lives, official brand assets, recipes, store address/contact information, real employee details and production quantities. No operational data is fabricated or silently imported.
+
+## Phase 3 decisions to validate before real use
+
+No customer file/catalog/prices were supplied; all Phase 3 verification uses synthetic isolated records, not real imports. The empty CSV template and explicit column mapper are implemented; compatibility with an actual store spreadsheet remains a later reviewed migration task. Brazilian numbers only, no automatic digit insertion; full birthdays only; exact normalized-name advisory rather than fuzzy matching. Optional CPF is unique and owner-private. Manager has no CPF/private notes, bulk data or marketing administration; cashier corrects active name/phone only; production sees active catalog without customer information/cost.
+
+Zero selling price is permitted only after explicit confirmation, maximum 99,999,999 centavos. Category deactivation does not cascade product status. No product photos, calculated expiry or stock configuration is added. All selling remains whole units. Estimated cost is not complete profitability.
+
+CSV is UTF-8 only, comma/semicolon, 256 KiB/100 rows/20 columns; atomic create-or-skip without update/merge. Memory previews last 15 minutes with up to 60 seconds cleanup; five global/two per owner. Closed metadata-only jobs retain 30 days with bounded cleanup; long-term audit/backup/customer retention still needs owner decisions, not an invented legal duration. Export is deliberately minimal and not a roundtrip backup. See the Phase 3 decisions/privacy/CSV documents for consequences and operator procedures.
 
 ## Environment findings
 
