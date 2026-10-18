@@ -1,4 +1,21 @@
-# Current Phase 6 coverage
+# Phase 7 coverage
+
+Actual gate/results are in PROGRESS.md. All Phase 0–6 regressions remain enabled.
+
+| Reporting requirements                                                               | Evidence                                                     |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| 1–9 fulfillment/intake/discounts/refunds/future payments/snapshots/inactive products | reports.integration 1–9; independent literal scenario        |
+| 10–12 method/session/overnight separation                                            | Integration 10–12, 31; browser methods and cash sources      |
+| 13–17 actual production/yield/waste/physical boundaries/current availability         | Integration 13–17; production/inventory browser source links |
+| 18–20 anonymization/projections/export authorization                                 | Integration 18–20; role/export browser checks                |
+| 21–24 full-filter totals/snapshot concurrency/alerts/zero policy                     | Integration 21–24, 32; dashboard/alert/empty browser flows   |
+| 25–28 SQL validation/empty/1,000-row cap/populated upgrade                           | Integration 25–28; dates/filter/export browser checks        |
+| Nonblocking read/export revocation/security/integrity drift                          | Integration 29–30, 33–34                                     |
+| Presets/timezone/keyboard/Axe/1366×768/narrow/retry/source drill-downs               | 05-reports.spec.ts; retained earlier browser suites          |
+
+No restore, installation, human pilot, Docker, TLS, LAN, provider settlement or high-volume acceptance is implied.
+
+## Historical Phase 6 coverage
 
 Actual executed results and gate status are in PROGRESS.md. All Phase 0–5 regressions remain enabled; Phase 6 adds six unit/API cases, 38 PostgreSQL cases and 17 production-browser cases.
 
@@ -141,8 +158,10 @@ All 41 inventory scenarios execute against real isolated PostgreSQL, alongside 6
 | 25  | Connection loss after sale                 | Pending Phase 5; only foundation status failure/retry is browser tested                                |
 | 26  | Restart preserves operational data         | Registry DB persistence and pending-preview restart behavior tested; full operational restart Phase 8  |
 | 27  | Backup restore                             | Pending Phase 8                                                                                        |
-| 28  | Dashboard/report reconciliation            | Pending Phase 7                                                                                        |
+| 28  | Dashboard/report reconciliation            | Implemented; reporting reconciliation gate in PROGRESS.md                                              |
 | 29  | Inactive product retained in history       | Catalog/category references retained; sales-history references pending Phase 5                         |
 | 30  | Ordinary operations without internet       | Pending Phase 8; foundation assets load with external browser requests blocked                         |
 
 Additional foundation evidence: real PostgreSQL migration/readiness, production entrypoint regression, safe structured errors, correlation IDs, no public default binding, desktop/mobile overflow, dialog keyboard behavior, settings filters/pagination and automated contrast/accessibility checks. See PROGRESS.md for actual counts and execution results.
+
+A regressão de relatório 35 cobre resposta de COMMIT diferido, efeito único de auditoria e a correção do prazo cliente prematuro. Soma-se aos grupos atuais, sem remover as regressões de concorrência do último proprietário.

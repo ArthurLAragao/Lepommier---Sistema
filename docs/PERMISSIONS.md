@@ -10,7 +10,7 @@ The API enforces Phase 2 identity, Phase 3 registry, Phase 4 inventory Phase 5 s
 | accounts.manage: list/create/edit/activate/disable/reset others | Yes   | No      | No      | No         |
 | security.review: latest safe security events via API            | Yes   | No      | No      | No         |
 
-The shared permission map, reusable route check and service reauthorization under the database lock enforce these rules. Settings navigation contains personal password controls and non-sensitive diagnostics for all roles; this resolves the earlier broad “Users/roles/settings” label. Only OWNER administers accounts or future store configuration. There is no editable store configuration in this phase. The authenticated overview is a non-operational foundation for all roles, without invented business figures.
+The shared permission map, reusable route check and service reauthorization under the database lock enforce these rules. Settings navigation contains personal password controls and non-sensitive diagnostics for all roles; this resolves the earlier broad “Users/roles/settings” label. Only OWNER administers accounts or future store configuration. There is no editable store configuration in this phase. The overview now shows the real Phase 7 dashboard only to OWNER; other roles see authorized operational shortcuts without owner financial figures.
 
 Owner changes require account version and a reason. Any role change/disabling revokes the target's sessions. Resetting another account requires the owner's current password and a reason; self-reset uses own password change. Login identifiers are immutable. No destructive account deletion route exists. The last active owner cannot be demoted or disabled; concurrent changes reauthorize under the same database lock. Maximum five active accounts includes owners; deactivated accounts retain references/history. The limit is an explicit initial deployment policy, subject to owner review before pilot.
 
@@ -89,12 +89,26 @@ Cashier may record existing authorized sale/payments against the shared active s
 
 Mutations reauthorize actor/session under the existing singleton before the operation/cash lock. Revocation first prevents completion; an already-held operation commits before a later revocation. Exact Origin/Host/CSRF apply to every new mutation, and uncertain-result lookup checks both actor ownership and current kind permission. Legacy closed sessions without a counted snapshot are read-only historical evidence, without fabricated review/counts. See CASH_SESSION_POLICY.md.
 
-## Remaining operational policy for Phases 7–9
+## Reporting policy and remaining release administration
 
-Business reports/exports must receive explicit named permissions and privacy projections before implementation. The earlier speculative matrix does not grant manager CPF, cashier historical cash, manager review/corrections or production financial reporting. Backup administration and installation/pilot acceptance remain pending. Existing identity and registry policies above remain authoritative.
+Phase 7 business reports/exports enforce the explicit named permissions and projections below. The earlier speculative matrix does not grant manager CPF, cashier historical cash, manager review/corrections or production financial reporting. Backup administration and installation/pilot acceptance remain pending. Existing identity and registry policies above remain authoritative.
 
 ## Session/setup controls implemented
 
 One-time owner setup requires direct loopback plus a private file-delivered installation secret, exact Origin and required CSRF header. A database transaction closes it permanently while creating the owner; forwarded headers cannot authorize setup. Argon2id hashes, opaque digest-backed sessions, HttpOnly/SameSite=Strict/Path=/ cookies, 12-hour absolute expiry and logout invalidation are implemented. Secure applies to HTTPS; local HTTP is an explicit exception. A new login replaces old access. Password/role/activation changes revoke sessions. Missing/null Origin and missing/invalid CSRF header are rejected for every identity mutation. No CORS allowance or browser token storage.
 
 Persistent login budgets are eight attempts per normalized identifier and sixty per direct source per fixed ten-minute window, with temporary retries and bounded password work. Audit includes identity, customer changes/preferences/anonymization/import/export and catalog/price/cost events, with safe metadata. Order/discount/payment/refund/cash-opening audit is implemented with coded metadata and no personal-text snapshots. See AUTH_SECURITY.md for exact behavior and the Portuguese access guide for local recovery. Future permissions must be enforced on each backend endpoint before enabling its UI.
+
+## Enforced in Phase 7
+
+| Named permission  | OWNER                          | MANAGER               | CASHIER | PRODUCTION |
+| ----------------- | ------------------------------ | --------------------- | ------- | ---------- |
+| reports.dashboard | Yes                            | No                    | No      | No         |
+| reports.financial | Yes                            | Yes                   | No      | No         |
+| reports.stock     | Yes                            | Yes                   | No      | Yes        |
+| reports.cash      | Yes                            | Yes                   | No      | No         |
+| reports.customers | One selected customer          | One selected customer | No      | No         |
+| reports.cost      | Recorded optional receipt cost | Same                  | No      | No         |
+| reports.export    | Explicit bounded CSV           | No                    | No      | No         |
+
+Single-customer report export additionally requires customers.export. General reports omit customer PII, private notes and collector details. PRODUCTION has production, permitted waste and inventory projections, no financial/customer/cost fields or counts; its filter lookup exposes identity only. MANAGER's explicit reporting grants do not broaden accounts/private-customer/bulk-export rights. Existing CASHIER payment/current-session views remain unchanged. Every endpoint and source uses backend authorization. Routine reads recheck within a short read-only snapshot; a role change appears on the next read. Exports reauthorize again before safe audit/delivery.

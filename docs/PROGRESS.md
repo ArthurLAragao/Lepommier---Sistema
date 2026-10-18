@@ -1,4 +1,70 @@
-# Phase 6 checkpoint — acceptance gate passed
+# Phase 7 checkpoint - acceptance gate passed
+
+Checkpoint: **18 October 2026**. **Phases 0–7 are implemented with regression coverage. Phase 7 acceptance gate passed. Phases 8–9 remain pending. This is not an operational store release.** Verified full backup/restore, hardened installation/update and human operator/store pilot remain outstanding.
+
+## Inspected baseline and preserved boundaries
+
+Implementation/test commit: **a10ab869c0704b82005e6d5cf8bddc0393ea2f05**. Documentation is a separate checkpoint commit; its final hash and actual GitHub synchronization are reported after remote-main verification.
+
+Started from clean main at **02e68aeb368092bec07d319c14ae193ea104a700**, fetched the authorized origin/main without divergence, and reconciled the brief/current policies/code. Reused React/Vite/Fastify/shared Zod/Prisma 7/PostgreSQL and existing native dialogs, security, permissions, money/date/CSV and inventory/order/cash services. Seven previous SQL migrations and package-lock.json match that baseline. No rebuild, dependency/global-service installation, database reset/drop, real-data seed, public interface or deployment. Synced project sources remain read-only.
+
+## Implemented and consequential decisions
+
+Thirteen permission-controlled tabular views: daily summary; fulfilled sales; stable-product sales; payment/refund method summaries; timestamped financial sources; order intake/current state; completed production; purchased ready-product receipts; waste; inventory movement/reconciliation; cash-session history; one customer's history; exact current alert sources. Owner dashboard, actual source links, Fortaleza presets/custom periods, relevant filters, stable pagination/full-filter totals, bounded safe explicit CSV, safe export audit and pt-BR operator guide are complete.
+
+Fulfillment, payment/refund and intake dates remain distinct. Discounts count once; later refunds do not rewrite deliveries. Price/name changes and inactive products preserve snapshot amounts. Physical opening/closing is historical; reservations/availability and alerts are current. Cash uses Phase 6 formulas/snapshots, not an alternative drawer definition. No profit, invented threshold, growth percentage, chart dependency, provider verification or item-level refund allocation.
+
+Reads validate session/actor in short REPEATABLE READ / READ ONLY snapshots without the global security write lock. Statement/transaction/acquisition bounds are 1.5/7/2 seconds. Export uses a new consistent snapshot, then a short final authorization/audit write before delivery. OWNER dashboard/export; explicit MANAGER financial/stock/cash/single-customer/cost reads without exports; PRODUCTION restricted stock/production/waste; CASHIER unchanged operational views. No customer PII/private-directory/cost leakage. Same exact Host/Origin/CSRF, session/setup/last-owner, CSP, privacy and append-only safeguards remain.
+
+See PHASE_7_DECISIONS.md, REPORT_METRICS.md, REPORT_RECONCILIATION.md and REPORTING_OPERATOR_GUIDE.pt-BR.md.
+
+## Additive migration
+
+**202610170008_reporting_indexes** adds nine deliberate date/ID indexes for actual global range queries across orders, payments, refunds, production, purchased receipts, inventory movements and expiry. No new tables or historical row rewrite. Clean eight-migration application, original-baseline upgrades and genuine populated seven-to-eight upgrade passed. The latter preserves fingerprints of 17 history tables; source ownership/triggers remain intact. Prisma status is current and diff is empty; diff alone does not prove SQL trigger preservation.
+
+## Commands actually executed and final results
+
+Runtime: explicit bundled **Node 24.19.0**, existing npm CLI, portable **PostgreSQL 17.10**, installed Edge production browser on Windows. No Docker/TLS/LAN claim.
+
+| Actual command/check                                                                               | Result                                                        |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| npm run db:generate                                                                                | Passed, Prisma 7.10.1                                         |
+| npm run db:validate                                                                                | Passed                                                        |
+| npm run db:migrate:test                                                                            | Passed, clean and retained baseline/populated upgrades        |
+| prisma migrate status                                                                              | Eight migrations; up to date                                  |
+| prisma migrate diff --from-config-datasource --to-schema apps/api/prisma/schema.prisma --exit-code | No difference                                                 |
+| npm run typecheck                                                                                  | Passed, shared/API/web/tools/tests                            |
+| npm run lint                                                                                       | Passed, zero warnings                                         |
+| npm run format:check                                                                               | Passed                                                        |
+| npm test                                                                                           | **132 passed**, 13 files                                      |
+| npm run test:integration via existing portable harness                                             | **217 passed**, seven files, including all 35 reporting cases |
+| npm run build (also actual pretest:e2e hook)                                                       | Passed, production local assets                               |
+| npm run test:e2e                                                                                   | **95 passed**, all earlier 78 plus 17 reporting cases         |
+| Previous migration/lockfile, UTF-8 and Git whitespace/private-value checks                         | Passed; seven previous migrations unchanged                   |
+| Preserved manual database row fingerprints                                                         | Match, four/five migrations unchanged; not a backup           |
+| Disposable preview migrate deploy/status/diff and restart/readiness/local assets/CSP               | Passed; no business records/accounts seeded                   |
+
+The existing task-local work/verify-postgres.mjs owns only test PostgreSQL 55437 and stops it in finally, retaining isolated databases. A full run used POMMIER_REPORT_ONLY=0 and RUN_POMMIER_E2E=1 for all 217 integration cases. Targeted reporting runs diagnosed failures; browser-only retries used POMMIER_BROWSER_ONLY=1/POMMIER_REPORT_E2E_ONLY=0 with another clean isolated DB and all 95 browser tests. No test was disabled. Unit/API and production-browser fixtures contain synthetic data only. Server time is controlled for the independently calculated multi-date reporting scenario; Asia/Tokyo browser timezone does not change Fortaleza dates.
+
+## Failures investigated and corrected
+
+SQL JSON aggregate parameter typing needed explicit text casts; daily aliases needed quoted day identifiers. Type checks identified a tuple type, request-payload overload and unused imports; these were fixed. The deliberate corruption fixture initially hit the existing fresh-version guard and was corrected without weakening it. Browser fixtures/assertions were corrected to supply the required catalog reason, match actual shared alert/receipt/filter semantics, compare rendered whitespace consistently and create their own pagination records. A method summary drill-down was corrected to preserve its exact day/method.
+
+Early reused-cluster browser runs saw intermittent 500s in existing cash/registry setup, followed by worker fixture conflicts/login throttling. Sixty direct real-service open/close cycles did not reproduce the initial cash error; PostgreSQL logs had no matching constraint error. A fresh disposable test cluster was created while preserving the older databases, and its full 95-browser run passed. A subsequent full regression exposed the concrete Query read timeout in transaction control. New integration case 35 independently delayed only audit COMMIT by 2.2 seconds and reproduced a premature HTTP 500 with the original two-second client timer. The driver deadline is now bounded at 25 seconds to outlive the existing 20-second transaction budget. Connection timeout/pool (2 seconds/five), report SQL/transaction/acquisition bounds (1.5/7/2 seconds), authentication and test budgets remain unchanged. This is a reproduced deadline defect and fix, without claiming every earlier uninstrumented error had the same cause. Final full integration and browser runs passed, including the new commit regression and original owner race. No test was disabled or automatically retried.
+
+Safe diagnostics add only allowlisted library error codes and timeout categories; the strengthened unit case proves no raw connection/error/private-code payload is logged. Optional E2E_DIAGNOSTIC_LOGS captures the test server's sanitized stdout only; private diagnostics stay outside Git. Portuguese waste reason projections also retain the existing stock vocabulary.
+
+Desktop/narrow screenshots were visually inspected; keyboard, contained scrolling and relevant Axe checks passed. This is not human operator/assistive-technology acceptance. Non-fatal upstream Zod comment, approximately 541-kB bundle, pg client-query deprecation and color-environment warnings remain disclosed, without dependency upgrades or security weakening. Synthetic export-cap fixtures are not high-volume acceptance.
+
+## Manual environments and next boundary
+
+Phase 4 **http://127.0.0.1:3333/** and Phase 5 **http://[::1]:3335/** were restored with their frozen compatible runtimes and unchanged four/five-migration databases. The existing empty/uninitialized disposable preview was reused for Phase 7 at **http://localhost:3336/**, rather than adding another host/cookie collision. It has eight migrations, zero business records/accounts and a preserved private installation key; choose the first owner through secure setup. Legacy physical names data/phase6-preview and le_pommier_phase6_preview remain intentional. Shared PostgreSQL remains 127.0.0.1:55438, physical data/manual-testing/postgres. Only app 3333 was temporarily paused for browser tests; the shared cluster was not stopped. All three pages/readiness/CSP/local assets were verified; no terminal must remain open. Exact commands/key retrieval/persistence are in MANUAL_TESTING.pt-BR.md. No verified pg_dump/restore path exists and fingerprints are not a backup.
+
+**Stop here. Phase 8 continuation:** inspect local backup tooling; agree a protected destination/retention and access policy; produce a complete backup and actually restore into a separate disposable database before migrating important data; test permissions, constraints, restarts, persistence and disconnected core operation; then harden/reproduce installation/update/security/dependency procedures. Do not begin a real-data upgrade or claim restore protection from row JSON. Phase 9 still requires a realistic store day and human pilot acceptance. No accounting, fiscal/provider settlement, cloud publication or marketing sending is added.
+
+## Historical Phase 6 evidence
+
+## Phase 6 checkpoint — acceptance gate passed
 
 Checkpoint: **17 October 2026**. **Phases 0–6 are implemented with regression coverage. Phase 6 acceptance gate passed. Phases 7–9 have not started. This is not an operational store release.** Full business reporting, verified backup/restore, installation acceptance and human store pilot remain pending.
 
