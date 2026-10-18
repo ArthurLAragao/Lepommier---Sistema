@@ -84,13 +84,28 @@ describe('foundation API contracts (no database behavior claimed)', () => {
   });
   it('hides internal exception messages and stack traces', async () => {
     const app = await create();
-    app.get('/api/test-failure', async () => {
-      throw new Error('postgresql://secret:password@private-host');
+    const logged: unknown[][] = [];
+    let code = 'P2028';
+    app.get('/api/test-failure', async (request) => {
+      request.log.error = (...args: unknown[]) => {
+        logged.push(args);
+      };
+      throw Object.assign(
+        new Error('Query read timeout postgresql://secret:password@private-host'),
+        { code },
+      );
     });
     const response = await app.inject('/api/test-failure');
     expect(response.statusCode).toBe(500);
     expect(response.body).not.toMatch(/password|postgresql|private-host|stack/);
     expect(apiErrorSchema.parse(response.json()).error.code).toBe('INTERNAL_ERROR');
+    expect(logged[0]?.[0]).toMatchObject({ errorCode: 'P2028', failureCategory: 'TIMEOUT' });
+    code = 'DO_NOT_LOG_PRIVATE_VALUE';
+    await app.inject('/api/test-failure');
+    expect(logged[1]?.[0]).toMatchObject({ errorCode: 'UNCLASSIFIED' });
+    expect(JSON.stringify(logged)).not.toMatch(
+      /password|postgresql|private-host|stack|DO_NOT_LOG_PRIVATE_VALUE/,
+    );
   });
   it('returns understandable field validation errors', async () => {
     const app = await create();

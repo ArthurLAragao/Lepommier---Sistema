@@ -1,0 +1,170 @@
+.report-page,
+.owner-dashboard,
+.report-result {
+  min-width: 0;
+  max-width: 100%;
+}
+.report-period {
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  margin: 16px 0;
+}
+.report-presets,
+.report-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.report-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+  margin: 14px 0 8px;
+}
+.report-dates .field {
+  min-width: 0;
+}
+.report-period p,
+.report-basis,
+.report-freshness {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.report-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.report-filters .filter,
+.report-filters .field {
+  min-width: 0;
+  width: 100%;
+}
+.report-result {
+  margin-top: 24px;
+}
+.report-result .table-scroll {
+  max-width: 100%;
+}
+.report-result .table-scroll td {
+  max-width: 340px;
+  overflow-wrap: anywhere;
+}
+.report-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 12px;
+  padding: 0;
+  margin: 18px 0;
+}
+.report-totals > div {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 14px;
+  background: var(--color-surface);
+}
+.report-totals dt {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.report-totals dd {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+.dashboard-metric {
+  padding: 20px;
+  min-width: 0;
+}
+.dashboard-metric h3 {
+  font-size: 14px;
+  margin: 0 0 18px;
+}
+.dashboard-metric strong {
+  display: block;
+  font-size: 28px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-metric p {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.dashboard-secondary,
+.dashboard-alerts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+.dashboard-secondary .card,
+.dashboard-alerts .card {
+  padding: 20px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dashboard-secondary h3,
+.dashboard-alerts h4 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+.dashboard-secondary p,
+.dashboard-alerts p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.dashboard-alerts strong {
+  display: block;
+  font-size: 22px;
+}
+.dashboard-alerts .integrity-alert {
+  border-left: 3px solid #8e543f;
+}
+.report-result a,
+.owner-dashboard a {
+  color: #35583e;
+  text-underline-offset: 3px;
+}
+.report-shortcuts {
+  margin: 20px 0;
+}
+@media (max-width: 1100px) {
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 620px) {
+  .report-dates {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dashboard-metrics,
+  .dashboard-secondary,
+  .dashboard-alerts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .report-period {
+    padding: 12px;
+  }
+  .report-presets .button {
+    flex: 1 1 42%;
+  }
+  .dashboard-metric strong {
+    font-size: 30px;
+  }
+}

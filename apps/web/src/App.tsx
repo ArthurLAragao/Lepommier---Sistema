@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  ArrowDownLeft,
   ArrowRight,
   CalendarDays,
   Check,
   ChevronRight,
   CircleHelp,
   ClipboardList,
-  Clock3,
   Database,
   FileBarChart2,
   FlaskConical,
@@ -48,6 +46,8 @@ import Inventory from './inventory/Inventory.js';
 import Production from './inventory/Production.js';
 import Orders from './sales/Orders.js';
 import Cash from './cash/Cash.js';
+import Reports from './reports/Reports.js';
+import Dashboard from './reports/Dashboard.js';
 import { AccountSettings } from './auth/AccountSettings.js';
 import { getSystemStatus, RequestError } from './api.js';
 import {
@@ -85,7 +85,10 @@ const dbCopy = {
 } as const;
 
 function initialModule(): ModuleId {
-  return modules.find((module) => `#${module.id}` === window.location.hash)?.id ?? 'overview';
+  return (
+    modules.find((module) => `#${module.id}` === window.location.hash.split('?')[0])?.id ??
+    'overview'
+  );
 }
 
 export default function App({
@@ -102,6 +105,7 @@ export default function App({
   onPasswordChanged: () => void;
 }) {
   const [active, setActive] = useState<ModuleId>(initialModule);
+  const [route, setRoute] = useState(window.location.hash);
   const [mobileNav, setMobileNav] = useState(false);
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [busy, setBusy] = useState(true);
@@ -169,6 +173,7 @@ export default function App({
   useEffect(() => {
     const hashChange = () => {
       setActive(initialModule());
+      setRoute(window.location.hash);
       setMobileNav(false);
     };
     window.addEventListener('hashchange', hashChange);
@@ -258,7 +263,10 @@ export default function App({
                     hasPermission(current.user.role, 'production.manage')) &&
                   (!['sales', 'orders'].includes(module.id) ||
                     hasPermission(current.user.role, 'orders.read')) &&
-                  (module.id !== 'cash' || hasPermission(current.user.role, 'cash.current')),
+                  (module.id !== 'cash' || hasPermission(current.user.role, 'cash.current')) &&
+                  (module.id !== 'reports' ||
+                    hasPermission(current.user.role, 'reports.financial') ||
+                    hasPermission(current.user.role, 'reports.stock')),
               )
               .map((module) => {
                 const Icon = icons[module.id];
@@ -444,186 +452,9 @@ export default function App({
               />
             )
           ) : active === 'overview' ? (
-            <>
-              <section className="welcome-panel" aria-labelledby="welcome-title">
-                <div className="welcome-copy">
-                  <span className="welcome-kicker">
-                    <span aria-hidden="true" />
-                    VAMOS COMEÇAR
-                  </span>
-                  <h2 id="welcome-title">
-                    Cada receita tem uma história.
-                    <br />
-                    Sua gestão começa aqui.
-                  </h2>
-                  <p>
-                    Estamos preparando a base para conectar vendas, pedidos e produção — com clareza
-                    para quem cuida da loja.
-                  </p>
-                  <Button onClick={() => navigate('settings')} variant="primary">
-                    Conferir instalação
-                    <ArrowRight size={16} aria-hidden="true" />
-                  </Button>
-                </div>
-                <div className="welcome-aside">
-                  <div className="welcome-line" />
-                  <Leaf size={34} strokeWidth={1} aria-hidden="true" />
-                  <blockquote>
-                    “Cultivando receitas
-                    <br />
-                    que viram memórias.”
-                  </blockquote>
-                  <span>LE POMMIER</span>
-                  <div className="welcome-line" />
-                </div>
-              </section>
-
-              <div className="section-title">
-                <div>
-                  <h2>O dia da loja</h2>
-                  <span>
-                    {status
-                      ? `Referência: ${formatBusinessDate(status.businessDate)} · Fortaleza`
-                      : 'Aguardando a data do sistema local'}
-                  </span>
-                </div>
-                <Badge>Painel consolidado ainda não disponível</Badge>
-              </div>
-              <div className="metric-grid">
-                {[
-                  {
-                    label: 'Vendas concluídas',
-                    icon: ShoppingBasket,
-                    detail: 'Consolidação disponível na fase de relatórios',
-                  },
-                  {
-                    label: 'Pagamentos recebidos',
-                    icon: ArrowDownLeft,
-                    detail: 'Consolidação disponível na fase de relatórios',
-                  },
-                  {
-                    label: 'Pedidos para retirada',
-                    icon: ShoppingBag,
-                    detail: 'Consulte a lista de pedidos',
-                  },
-                  {
-                    label: 'Situação do caixa',
-                    icon: Wallet,
-                    detail: 'Consulte a sessão no módulo Caixa',
-                  },
-                ].map(({ label, icon: Icon, detail }) => (
-                  <Card className="metric-card" key={label}>
-                    <div className="metric-title">
-                      <span>{label}</span>
-                      <Icon size={18} strokeWidth={1.5} aria-hidden="true" />
-                    </div>
-                    <div className="metric-value" aria-label="Métrica indisponível">
-                      —
-                    </div>
-                    <span className="metric-footnote">{detail}</span>
-                  </Card>
-                ))}
-              </div>
-
-              <div className="overview-grid">
-                <Card className="preparation-card">
-                  <div className="card-heading">
-                    <div className="card-title-icon">
-                      <span>
-                        <ClipboardList size={18} />
-                      </span>
-                      <h2>Primeiros passos</h2>
-                    </div>
-                    <span className="small-label">PREPARAÇÃO</span>
-                  </div>
-                  <p className="card-intro">Acompanhe o que falta antes de usar na rotina.</p>
-                  <ol className="setup-steps">
-                    <li>
-                      <span className="step-index step-complete">
-                        <Check size={14} />
-                      </span>
-                      <div>
-                        <strong>Preparar a base local</strong>
-                        <span>Interface, navegação e conexão com o sistema.</span>
-                      </div>
-                      <Badge tone="success">Pronto</Badge>
-                    </li>
-                    <li>
-                      <span className={`step-index ${databaseReady ? 'step-complete' : ''}`}>
-                        {databaseReady ? <Check size={14} /> : '2'}
-                      </span>
-                      <div>
-                        <strong>Conectar o banco de dados</strong>
-                        <span>
-                          {status
-                            ? dbCopy[status.database.status] + '.'
-                            : 'Verifique a conexão desta instalação.'}
-                        </span>
-                      </div>
-                      {databaseReady ? (
-                        <Badge tone="success">Conectado</Badge>
-                      ) : (
-                        <button
-                          type="button"
-                          className="text-button"
-                          onClick={() => navigate('settings')}
-                        >
-                          Conferir
-                          <ArrowRight size={14} />
-                        </button>
-                      )}
-                    </li>
-                    <li>
-                      <span className="step-index">3</span>
-                      <div>
-                        <strong>Acesso individual configurado</strong>
-                        <span>Sua conta está autenticada no sistema local.</span>
-                      </div>
-                      <Badge tone="success">Pronto</Badge>
-                    </li>
-                    <li>
-                      <span className="step-index">4</span>
-                      <div>
-                        <strong>Cadastrar produtos e estoque inicial</strong>
-                        <span>Use Catálogo e Estoque conforme as permissões do seu perfil.</span>
-                      </div>
-                      <LockKeyhole
-                        size={15}
-                        className="muted-icon"
-                        aria-label="Disponível conforme o perfil"
-                      />
-                    </li>
-                  </ol>
-                </Card>
-                <Card className="activity-card">
-                  <div className="card-heading">
-                    <div className="card-title-icon">
-                      <span>
-                        <Clock3 size={18} />
-                      </span>
-                      <h2>Movimentações do dia</h2>
-                    </div>
-                  </div>
-                  <EmptyState
-                    title="Sua rotina aparecerá aqui"
-                    description="O painel consolidado depende da fase de relatórios. Consulte os módulos disponíveis conforme seu perfil para os registros atuais."
-                    icon={<Store size={28} strokeWidth={1.2} />}
-                  />
-                  <div className="activity-note">
-                    <ShieldCheck size={16} aria-hidden="true" />
-                    <span>Painel consolidado de operações ainda não disponível.</span>
-                  </div>
-                </Card>
-              </div>
-
-              <div className="bottom-note">
-                <span>
-                  <LockKeyhole size={14} aria-hidden="true" />
-                  Seus dados ficam no computador da loja.
-                </span>
-                <span>Operações indisponíveis nesta versão inicial.</span>
-              </div>
-            </>
+            <Dashboard current={current} today={status?.businessDate ?? null} />
+          ) : active === 'reports' ? (
+            <Reports key={route} current={current} today={status?.businessDate ?? null} />
           ) : active === 'settings' ? (
             <>
               <AccountSettings
@@ -729,8 +560,9 @@ function SettingsPage({
           <p>
             Clientes, catálogo, produção, estoque, vendas e pedidos estão disponíveis conforme seu
             perfil. Pagamentos são confirmados manualmente. Caixa permite movimentos e fechamento
-            contado, conciliação das fontes e revisão. Relatórios completos, restauração e piloto
-            ainda dependem das próximas fases.
+            contado, conciliação das fontes e revisão. Relatórios operacionais e painel do
+            proprietário estão disponíveis conforme o perfil. Restauração verificada, instalação e
+            piloto ainda dependem das próximas fases.
           </p>
         </div>
         {status?.database.status !== 'ready' && (

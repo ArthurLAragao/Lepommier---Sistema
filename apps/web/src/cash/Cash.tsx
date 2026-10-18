@@ -44,8 +44,10 @@ const integrityLabels: Record<string, string> = {
 export default function Cash({ current }: { current: CurrentUser }) {
   const result = useRegistryData('/cash/current', cashCurrentDto);
   const [opening, setOpening] = useState(false);
-  const [tab, setTab] = useState<'current' | 'history'>('current');
-  const [selected, setSelected] = useState('');
+  const initialId =
+    new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('sessionId') ?? '';
+  const [tab, setTab] = useState<'current' | 'history'>(initialId ? 'history' : 'current');
+  const [selected, setSelected] = useState(initialId);
   const [revision, setRevision] = useState(0);
   const [message, setMessage] = useState('');
   const manage = hasPermission(current.user.role, 'cash.read');

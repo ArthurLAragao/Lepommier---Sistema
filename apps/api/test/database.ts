@@ -49,10 +49,10 @@ export function migrate(rawUrl: string, config?: string) {
 }
 /** Fresh named DBs are retained. Never reset/drop the supplied database. */
 export async function freshDatabase(
-  upgrade: boolean | 'identity' | 'registry' | 'inventory' | 'orders' = false,
+  upgrade: boolean | 'identity' | 'registry' | 'inventory' | 'orders' | 'cash' = false,
   beforeUpgrade?: (client: PrismaClient, url: string) => Promise<void>,
 ) {
-  if (beforeUpgrade && upgrade !== 'orders')
+  if (beforeUpgrade && upgrade !== 'orders' && upgrade !== 'cash')
     throw new Error('The explicit pre-upgrade fixture requires the five-migration baseline.');
   const url = testUrl();
   const name = `pommier_${randomUUID().replaceAll('-', '').slice(0, 12)}_test`;
@@ -89,7 +89,8 @@ export async function freshDatabase(
       upgrade === 'identity' ||
       upgrade === 'registry' ||
       upgrade === 'inventory' ||
-      upgrade === 'orders'
+      upgrade === 'orders' ||
+      upgrade === 'cash'
     ) {
       const identity = resolve(path, 'migrations/202610170002_identity');
       mkdirSync(identity, { recursive: true });
@@ -100,7 +101,12 @@ export async function freshDatabase(
         ),
       );
     }
-    if (upgrade === 'registry' || upgrade === 'inventory' || upgrade === 'orders') {
+    if (
+      upgrade === 'registry' ||
+      upgrade === 'inventory' ||
+      upgrade === 'orders' ||
+      upgrade === 'cash'
+    ) {
       const registry = resolve(path, 'migrations/202610170003_registry');
       mkdirSync(registry, { recursive: true });
       writeFileSync(
@@ -110,7 +116,7 @@ export async function freshDatabase(
         ),
       );
     }
-    if (upgrade === 'inventory' || upgrade === 'orders') {
+    if (upgrade === 'inventory' || upgrade === 'orders' || upgrade === 'cash') {
       const inventory = resolve(path, 'migrations/202610170004_inventory');
       mkdirSync(inventory, { recursive: true });
       writeFileSync(
@@ -121,7 +127,7 @@ export async function freshDatabase(
       );
     }
     const config = resolve(path, 'baseline.config.ts');
-    if (upgrade === 'orders') {
+    if (upgrade === 'orders' || upgrade === 'cash') {
       const orders = resolve(path, 'migrations/202610170005_orders');
       mkdirSync(orders, { recursive: true });
       writeFileSync(
@@ -135,6 +141,15 @@ export async function freshDatabase(
       config,
       `export default { schema: ${JSON.stringify(resolve(projectRoot, 'apps/api/prisma/schema.prisma'))}, migrations: { path: ${JSON.stringify(resolve(path, 'migrations'))} }, datasource: { url: process.env.DATABASE_URL } };`,
     );
+    if (upgrade === 'cash')
+      for (const name of ['202610170006_cash', '202610170007_cash_session_entry']) {
+        const target = resolve(path, 'migrations', name);
+        mkdirSync(target, { recursive: true });
+        writeFileSync(
+          resolve(target, 'migration.sql'),
+          readFileSync(resolve(projectRoot, 'apps/api/prisma/migrations', name, 'migration.sql')),
+        );
+      }
     migrate(url.toString(), config);
     await client.storeSettings.create({
       data: { id: 1, createdAt: new Date('2001-01-01T00:00:00Z') },
@@ -143,7 +158,8 @@ export async function freshDatabase(
       upgrade === 'identity' ||
       upgrade === 'registry' ||
       upgrade === 'inventory' ||
-      upgrade === 'orders'
+      upgrade === 'orders' ||
+      upgrade === 'cash'
     ) {
       const { PasswordHasher } = await import('../src/auth/password.js');
       const { tokenDigest } = await import('../src/auth/security.js');
@@ -176,7 +192,12 @@ export async function freshDatabase(
         },
       });
       legacy = { userId: user.id, passwordHash, initializedAt, sessionDigest };
-      if (upgrade === 'registry' || upgrade === 'inventory' || upgrade === 'orders') {
+      if (
+        upgrade === 'registry' ||
+        upgrade === 'inventory' ||
+        upgrade === 'orders' ||
+        upgrade === 'cash'
+      ) {
         const customer = await client.customer.create({
           data: {
             name: 'Preserved synthetic customer',
@@ -218,7 +239,7 @@ export async function freshDatabase(
           categoryId: category.id,
           marketingId: marketing.id,
         };
-        if (upgrade === 'inventory' || upgrade === 'orders')
+        if (upgrade === 'inventory' || upgrade === 'orders' || upgrade === 'cash')
           inventoryLegacy = await client.$transaction(async (tx) => {
             const op = await tx.inventoryOperation.create({
               data: {

@@ -6,6 +6,7 @@ import {
   sourceLabels,
   formatOrderMoney,
   formatDateTime,
+  hasPermission,
   type CurrentUser,
 } from '@pommier/shared';
 import { Button, Table, Pagination, EmptyState } from '../components/ui.js';
@@ -23,6 +24,11 @@ export default function CustomerHistory({ id, current }: { id: string; current: 
   return (
     <section className="card profile-card">
       <h2>Pedidos, compras e pagamentos registrados</h2>
+      {hasPermission(current.user.role, 'reports.customers') && (
+        <a className="button button-secondary" href={'#reports?kind=customers&customerId=' + id}>
+          Relatório deste cadastro por período
+        </a>
+      )}
       <p className="auth-help">
         Somente operações deste sistema. Histórico anterior em papel não foi importado. Entrada de
         pedido, entrega, pagamento e reembolso têm significados distintos; não há crédito ou dívida

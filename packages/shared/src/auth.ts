@@ -51,7 +51,14 @@ export type Permission =
   | 'cash.close'
   | 'cash.review'
   | 'cash.correct'
-  | 'cash.operations';
+  | 'cash.operations'
+  | 'reports.dashboard'
+  | 'reports.financial'
+  | 'reports.stock'
+  | 'reports.cash'
+  | 'reports.customers'
+  | 'reports.export'
+  | 'reports.cost';
 const cashManagement: Permission[] = [
   'cash.current',
   'cash.read',
@@ -89,6 +96,13 @@ const customerManagement: Permission[] = [
 ];
 const permissions: Record<Role, readonly Permission[]> = {
   OWNER: [
+    'reports.dashboard',
+    'reports.financial',
+    'reports.stock',
+    'reports.cash',
+    'reports.customers',
+    'reports.export',
+    'reports.cost',
     ...cashManagement,
     'cash.review',
     'cash.correct',
@@ -111,6 +125,11 @@ const permissions: Record<Role, readonly Permission[]> = {
     'catalog.cost',
   ],
   MANAGER: [
+    'reports.financial',
+    'reports.stock',
+    'reports.cash',
+    'reports.customers',
+    'reports.cost',
     ...cashManagement,
     ...orderOperations,
     'orders.discount',
@@ -131,6 +150,7 @@ const permissions: Record<Role, readonly Permission[]> = {
     'inventory.availability',
   ],
   PRODUCTION: [
+    'reports.stock',
     'profile.self',
     'catalog.read',
     'inventory.availability',

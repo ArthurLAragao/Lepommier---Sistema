@@ -18,7 +18,11 @@ export function createDatabase(url: string | undefined): DatabaseProbe {
   const adapter = new PrismaPg({
     connectionString: url,
     connectionTimeoutMillis: 2000,
-    query_timeout: 2000,
+    // This client deadline also covers COMMIT. It must outlive the existing
+    // 20-second transaction budget, rather than report failure while a valid
+    // deferred constraint/audit commit is still finishing. Connection and
+    // server-side reporting statement/transaction deadlines remain separate.
+    query_timeout: 25000,
     max: 5,
   });
   const prisma = new PrismaClient({ adapter });

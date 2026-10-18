@@ -52,6 +52,7 @@ export default defineConfig({
     },
   ],
   webServer: {
+    stdout: process.env.E2E_DIAGNOSTIC_LOGS === '1' ? 'pipe' : 'ignore',
     command: 'node --env-file-if-exists=.env scripts/start.mjs',
     url: 'http://127.0.0.1:3333/api/health/live',
     reuseExistingServer: !process.env.CI && process.env.E2E_REUSE_SERVER === '1',

@@ -9,6 +9,7 @@ import { registerRegistryRoutes } from './registry/routes.js';
 import { registerInventoryRoutes } from './inventory/routes.js';
 import { registerSalesRoutes } from './sales/routes.js';
 import { registerCashRoutes } from './cash/routes.js';
+import { registerReportingRoutes } from './reports/routes.js';
 import {
   APP_VERSION,
   BUSINESS_TIMEZONE,
@@ -89,6 +90,7 @@ export async function buildApp(options: AppOptions) {
       await registerInventoryRoutes(authApp, auth, clock);
       await registerSalesRoutes(authApp, auth, clock);
       await registerCashRoutes(authApp, auth, clock);
+      await registerReportingRoutes(authApp, auth, clock);
     },
     { prefix: '/api' },
   );
@@ -125,7 +127,7 @@ export async function buildApp(options: AppOptions) {
     const now = clock();
     return systemStatusSchema.parse({
       version: APP_VERSION,
-      phase: 6,
+      phase: 7,
       businessTimezone: BUSINESS_TIMEZONE,
       businessDate: businessDateOf(now),
       timestamp: now.toISOString(),

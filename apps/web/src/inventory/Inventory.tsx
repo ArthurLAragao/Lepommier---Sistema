@@ -543,16 +543,18 @@ function StockPanel({
     </>
   );
 }
-function BatchDetails({
+export function BatchDetails({
   id,
   current,
   onClose,
   onAction,
+  readOnly = false,
 }: {
   id: string;
   current: CurrentUser;
   onClose: () => void;
   onAction: (kind: 'waste' | 'adjust', batch: StockBatch) => void;
+  readOnly?: boolean;
 }) {
   const result = useRegistryData(`/inventory/batches/${id}`, batchDetailSchema);
   const b = result.data?.batch;
@@ -614,7 +616,8 @@ function BatchDetails({
             </p>
           )}
           <div className="registry-actions">
-            {hasPermission(current.user.role, 'inventory.waste') &&
+            {!readOnly &&
+              hasPermission(current.user.role, 'inventory.waste') &&
               (current.user.role !== 'PRODUCTION' || b.source === 'PRODUCTION') && (
                 <Button
                   variant="secondary"
@@ -624,7 +627,7 @@ function BatchDetails({
                   Registrar perda
                 </Button>
               )}
-            {hasPermission(current.user.role, 'inventory.adjust') && (
+            {!readOnly && hasPermission(current.user.role, 'inventory.adjust') && (
               <Button
                 variant="secondary"
                 disabled={!b.consistent}

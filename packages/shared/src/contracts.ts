@@ -29,7 +29,7 @@ export const modules = [
     label: 'Visão geral',
     phase: 1,
     available: true,
-    description: 'Acompanhe a preparação do sistema e a conexão local.',
+    description: 'Painel do proprietário com fontes reais e acesso por perfil.',
   },
   {
     id: 'sales',
@@ -85,7 +85,7 @@ export const modules = [
     id: 'reports',
     label: 'Relatórios',
     phase: 7,
-    available: false,
+    available: true,
     description: 'Vendas concluídas, recebimentos e conciliação por período.',
   },
   {
@@ -111,7 +111,7 @@ export type DatabaseStatus = z.infer<typeof databaseStatusSchema>;
 
 export const systemStatusSchema = z.object({
   version: z.string(),
-  phase: z.literal(6),
+  phase: z.literal(7),
   businessTimezone: z.literal(BUSINESS_TIMEZONE),
   businessDate: businessDateSchema,
   timestamp: z.iso.datetime(),

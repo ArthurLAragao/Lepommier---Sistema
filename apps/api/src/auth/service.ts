@@ -81,7 +81,8 @@ export type SecurityEvent =
   | 'CASH_CLOSED'
   | 'CASH_REVIEWED'
   | 'CASH_REVERSED'
-  | 'CASH_RECONCILED';
+  | 'CASH_RECONCILED'
+  | 'REPORT_EXPORTED';
 type Tx = Prisma.TransactionClient;
 export async function securityLock(tx: Tx) {
   await tx.$queryRaw`SELECT "id" FROM "InstallationState" WHERE "id" = 1 FOR UPDATE`;
@@ -151,6 +152,24 @@ export class AuthService {
       initialized: state.initializedAt !== null,
       setupAvailable: state.initializedAt === null && Boolean(this.installationSecret),
     };
+  }
+  /** Short MVCC reads do not acquire the security singleton or lock sales rows.
+   * Authorization is evaluated in the same snapshot; a completed revocation is
+   * observed by the next request. Export delivery additionally reauthorizes. */
+  async withReadSnapshot<T>(
+    principal: Principal,
+    permission: Permission,
+    operation: (tx: Tx, actor: { id: string; role: import('@pommier/shared').Role }) => Promise<T>,
+  ): Promise<T> {
+    return this.db.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SET TRANSACTION READ ONLY`;
+        await tx.$executeRaw`SET LOCAL statement_timeout = '1500ms'`;
+        const actor = await this.authorize(tx, principal, permission);
+        return operation(tx, actor);
+      },
+      { isolationLevel: 'RepeatableRead', maxWait: 2000, timeout: 7000 },
+    );
   }
   async setup(input: z.infer<typeof setupSchema>, requestId: string) {
     if ((await this.state()).initialized)

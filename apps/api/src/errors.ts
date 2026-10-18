@@ -57,7 +57,20 @@ export function installErrorHandler(app: FastifyInstance) {
     }
     // Do not log raw errors: connection errors can contain credentials or personal data.
     request.log.error(
-      { event: 'request_failed', errorType: error.name, requestId },
+      {
+        event: 'request_failed',
+        errorType: error.name,
+        errorCode:
+          'code' in error &&
+          typeof error.code === 'string' &&
+          /^(?:P\d{4}|FST_ERR_[A-Z_]+|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE)$/.test(error.code)
+            ? error.code
+            : 'UNCLASSIFIED',
+        failureCategory: /timeout|timed out|transaction.*(?:expired|closed)/i.test(error.message)
+          ? 'TIMEOUT'
+          : 'UNCLASSIFIED',
+        requestId,
+      },
       'Falha ao processar solicitação',
     );
     return reply.status(500).send({

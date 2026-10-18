@@ -272,6 +272,7 @@ model Batch {
   @@unique([id, productId])
   @@unique([productId, referenceKey])
   @@index([productId, expiresAt, recordedAt, id])
+  @@index([expiresAt, id])
 }
 
 model ProductionRecord {
@@ -297,6 +298,7 @@ model ProductionRecord {
   @@unique([batchId, productId])
   @@index([status, plannedDate, id])
   @@index([productId, plannedDate])
+  @@index([completedAt, id])
 }
 
 model PurchasedProductReceipt {
@@ -316,6 +318,7 @@ model PurchasedProductReceipt {
 
   @@unique([batchId, productId])
   @@index([productId, recordedAt])
+  @@index([recordedAt, id])
 }
 
 model InventoryReservation {
@@ -384,6 +387,7 @@ model InventoryMovement {
   @@index([reservationId])
   @@index([productId, createdAt, id])
   @@index([batchId, createdAt, id])
+  @@index([createdAt, id])
 }
 
 enum OrderSource {
@@ -529,6 +533,9 @@ model Order {
   @@index([customerId, fulfilledAt, id])
   @@index([status, pickupAt, id])
   @@index([source, createdAt, id])
+  @@index([createdAt, id])
+  @@index([fulfilledAt, id])
+  @@index([confirmedAt, id])
 }
 
 model OrderItem {
@@ -571,6 +578,7 @@ model Payment {
 
   @@unique([id, orderId])
   @@index([cashSessionId, method, recordedAt])
+  @@index([recordedAt, id])
 }
 
 model Refund {
@@ -593,6 +601,7 @@ model Refund {
 
   @@unique([paymentId, orderId])
   @@index([cashSessionId, method, recordedAt])
+  @@index([recordedAt, id])
 }
 
 model OrderEvent {
