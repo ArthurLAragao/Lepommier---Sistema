@@ -2,6 +2,8 @@
 
 Este documento descreve controles implementados, sem afirmar conformidade jurídica completa. O responsável pela loja ainda precisa aprovar finalidades, prazos de retenção, acesso a arquivos baixados/backups e atendimento de solicitações.
 
+Na Fase 6, as projeções de caixa mostram referências financeiras/pedido, meio, valor e operador/data, sem cópia de cliente, contato, CPF ou custo. Motivos, referências, justificativas e notas de revisão de caixa não devem conter identidade de cliente/destinatário: não possuem vínculo com cliente e não são apagados pela anonimização. Use somente contexto operacional necessário sem identificação. A auditoria mantém códigos/contagens/valores, sem cópia desses textos. A limpeza dos dados de retirada vinculados ao cliente e os limites anteriores de retenção continuam válidos. Consulte CASH_SESSION_POLICY.md.
+
 Nome é obrigatório; telefone, e-mail, nascimento, CPF, endereço/referência e notas são opcionais. Não recolha dados sem necessidade. CPF valida apenas formato/verificadores; e-mail/telefone não têm propriedade ou identidade verificadas. Não use observações para dados pessoais sensíveis desnecessários ou para suposto consentimento promocional.
 
 ## Acesso e preferências

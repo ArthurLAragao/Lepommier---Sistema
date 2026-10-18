@@ -1,6 +1,25 @@
-# Current Phase 5 coverage
+# Current Phase 6 coverage
 
-Acceptance status and actual counts are in PROGRESS.md; coverage alone does not assert a passing gate. All Phase 0–4 regressions remain enabled. Phase 5 adds 5 shared unit cases, 40 real PostgreSQL cases and 18 production-browser cases.
+Actual executed results and gate status are in PROGRESS.md. All Phase 0–5 regressions remain enabled; Phase 6 adds six unit/API cases, 38 PostgreSQL cases and 17 production-browser cases.
+
+| Required cash groups                                                           | Evidence                                                                     |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| 1–3 populated upgrade, one active opening, retry                               | cash.integration 1–3; genuine five-migration fixture; browser opening        |
+| 4–8 cash amount/tender, methods, current/older refunds                         | Integration 4–8; cash unit formula/methods; browser method detail            |
+| 9–15 additions/withdrawals/expenses, validation/floor/retry/append-only        | Integration 9–15; browser movement forms, insufficient outflow               |
+| 16–19 immutable counted closing, explanation/stale/concurrency                 | Integration 16–19; browser counted difference/reload; unit signed count      |
+| 20–25 payment/checkout/refund/movement close races, closed writes/next session | Integration 20–25 and stock reconciliation 36                                |
+| 26–28 overnight/unpaid, review, linked current-session reversal                | Integration 26–28; browser review/reversal and immutable totals              |
+| 29–32 roles/revocation/exact guards/key mismatch                               | Integration 29–32; browser OWNER/MANAGER/CASHIER/PRODUCTION and retry/lookup |
+| 33–36 drift/direct SQL/privacy/inventory                                       | Integration 33–36; safe DTO/source counters and no repair                    |
+| Atomic audit failure / financial source corruption                             | Additional integration 37–38; no product bypass                              |
+| Keyboard/Axe/desktop/narrow                                                    | cash browser final case; screenshots visually inspected at checkpoint        |
+
+No full bank/card settlement reconciliation, cash export, accounting, supplier/payables, business dashboard, backup/restore or human pilot acceptance is implied. Phase 7 full reporting, Phase 8 recovery/installation and Phase 9 pilot remain pending.
+
+## Historical Phase 5 coverage (then-future cash statements superseded above)
+
+Acceptance status and actual counts are in PROGRESS.md; coverage alone does not assert a passing gate. All Phase 0–4 regressions remained enabled. Phase 5 adds 5 shared unit cases, 40 real PostgreSQL cases and 18 production-browser cases.
 
 | Required Phase 5 groups                                                                                                 | Evidence                                                                    |
 | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |

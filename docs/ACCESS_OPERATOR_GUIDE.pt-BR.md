@@ -1,6 +1,8 @@
+> Atualização da Fase 6: suprimentos, sangrias, despesas, fechamento contado, revisão e estorno vinculado de movimentação estão disponíveis conforme as permissões. Consulte [o guia de caixa](CASH_OPERATOR_GUIDE.pt-BR.md). Os controles de acesso e os fluxos de vendas abaixo continuam válidos, com o caixa descrito no guia atual. Relatórios gerais, contabilidade e conciliação bancária continuam pendentes.
+
 # Acesso local e administração da equipe
 
-Este guia cobre acesso e contas. Clientes/catálogo e produção/estoque têm guias próprios. Vendas, pedidos e pagamentos manuais estão em SALES_OPERATOR_GUIDE.pt-BR.md; somente a abertura limitada do caixa existe, sem fechamento. Não use esta versão como sistema completo de operação da loja. **Neste computador, siga MANUAL_TESTING.pt-BR.md para iniciar o ambiente anterior preservado e a conferência separada da Fase 5; não execute o novo build contra o banco antigo sem migração/backup revisados.**
+Este guia cobre acesso e contas. Clientes/catálogo e produção/estoque têm guias próprios. Vendas, pedidos e pagamentos manuais estão em SALES_OPERATOR_GUIDE.pt-BR.md; o controle operacional de caixa, movimentos e fechamento contado está em CASH_OPERATOR_GUIDE.pt-BR.md. Não use esta versão como sistema completo de operação da loja. **Neste computador, siga MANUAL_TESTING.pt-BR.md para iniciar os ambientes preservados das Fases 4/5 e a conferência separada da Fase 6; não execute o novo build contra o banco antigo sem migração/backup revisados.**
 
 ## Preparar o primeiro acesso
 
@@ -30,7 +32,7 @@ Após muitas tentativas, aguarde até 10 minutos. A proteção permite até oito
 
 ## Administrar a equipe
 
-Somente **Proprietário(a)** administra contas. Gerente, Caixa e Produção podem alterar a própria senha, mas não podem criar contas, alterar perfis ou consultar a auditoria. Os módulos operacionais continuam indisponíveis para todos.
+Somente **Proprietário(a)** administra contas. Gerente, Caixa e Produção podem alterar a própria senha, mas não podem criar contas, alterar perfis ou consultar a auditoria. Os módulos implementados aparecem conforme as permissões; relatórios gerais continuam indisponíveis.
 
 Em **Configurações → Equipe e acessos**:
 

@@ -49,7 +49,7 @@ SalesService composes the existing InventoryService command/transaction helpers,
 
 Named order permissions and explicit database projections exclude product cost/customer private data; PRODUCTION has no access. Customer anonymization scrubs collection text on linked orders and prevents reintroduction, retaining restrictive references and product/money snapshots. Customer profile queries distinguish fulfilled totals before refunds, receipts and refunds. Exact Host/Origin/CSRF/CSP and auth/session/setup safeguards remain unchanged.
 
-Vendas/Pedidos use the existing cream/green native-dialog primitives, version conflicts, manual financial confirmations, Portuguese errors, independent fulfillment/payment badges, responsive cart and history. Cash opening is limited and explicit, with one shared active session; closing/reconciliation/movements/reporting remain Phase 6. See PHASE_5_DECISIONS.md, ORDER_PAYMENT_POLICY.md and CASH_FOUNDATION.md.
+Vendas/Pedidos use the existing cream/green native-dialog primitives, version conflicts, manual financial confirmations, Portuguese errors, independent fulfillment/payment badges, responsive cart and history. Cash opening remains explicit and shared. Phase 6 now supplies movements, counted closing, review, linked corrections and cash-specific history/reconciliation; full business reporting remains Phase 7. See PHASE_5_DECISIONS.md, ORDER_PAYMENT_POLICY.md and CASH_FOUNDATION.md.
 
 ## Future operational database design (historical design reference; implemented Order/Payment/CashSession fields above supersede this outline)
 
@@ -84,3 +84,11 @@ Owner-only customer export/import and registry permissions are implemented in Ph
 Node.js 24 LTS is the intended runtime. Pin exact direct dependency versions and retain `package-lock.json`. Check installed package engines, Fastify plugin compatibility, Prisma schema generation, frontend build and runtime tests. Do not infer compatibility from a version number alone. See DEPENDENCIES.md for verified sources and actual installed versions.
 
 Store timestamps as PostgreSQL timestamptz/UTC instants. Derive report ranges from a validated Fortaleza business date. Ordinary operation requires no external network calls. Liveness and database readiness are separate: a live HTTP server does not mean the database is usable.
+
+## Implemented Phase 6 cash extension
+
+Additive 006_cash preserves all prior sessions/payments/refunds and adds CashMovement, CashClosing, CashReview, source activity/review versions and an explicit legacy-closed marker. SQL-derived totals are the authority; a closing stores the reviewed immutable JSON/string-centavo snapshot. Migration 007_cash_session_entry prevents future inserts impersonating preexisting legacy closures. Original migrations 001–005 remain unchanged. Custom SQL guard/counter/deferred-commit protections complement Prisma schema and are tested directly; Prisma diff does not describe triggers.
+
+CashService reuses InventoryService actor/key/kind/canonical-payload operations. Cash-only lock order is security singleton → operation → session, with no later order/product lock. Sales retains security → operation → sorted products → order → current session → sorted reservations/batches. Payment/refund/movement posting locks the session, rejects closed/insufficient/over-limit sources and increments activity in the transaction. Closing holds no lock while an employee counts; confirmation locks/recomputes and rejects stale activity. Snapshot/state/audit/result commit together, with one snapshot per session. Existing bounded three-attempt recognized deadlock/serialization retry remains unchanged.
+
+Cash projections omit customer data, costs and tender/change. cash.current is minimal; detailed source/history/reconciliation is owner/manager only; review and exact linked current-session reversal are owner only. Native dialogs and the existing memory-only uncertain command mechanism retain keys/payload until retry/status resolution; browser reload is not a durable pending queue. No wildcard CORS, new authentication system, public service or CSP relaxation. See PHASE_6_DECISIONS.md and CASH_SESSION_POLICY.md.

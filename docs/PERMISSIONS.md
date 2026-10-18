@@ -1,6 +1,6 @@
 # Permission matrix
 
-The API enforces Phase 2 identity, Phase 3 registry, Phase 4 inventory and Phase 5 sales permissions below. The remaining operational matrix specifies later modules; it does not claim those modules exist. A hidden/disabled UI control is not authorization. No default production credentials.
+The API enforces Phase 2 identity, Phase 3 registry, Phase 4 inventory Phase 5 sales and Phase 6 cash permissions below. The remaining operational matrix specifies later modules; it does not claim those modules exist. A hidden/disabled UI control is not authorization. No default production credentials.
 
 ## Enforced in Phase 2
 
@@ -72,28 +72,26 @@ All services recheck current actor/session and permission under the shared secur
 
 Order list/detail selects exclude customer CPF/contact/address/private notes and product cost. Collection name/notes are necessary order-only fields; no customer PII snapshot. Production has no order queue or new customer endpoint. Customer history additionally requires customers.read; CASHIER cannot retrieve inactive/anonymized profiles, while authorized order-number history remains available without resurrecting identity. Cashier current-session DTO omits opening float. All writes use the existing transactional actor/session recheck and exact Origin/Host/CSRF. See PHASE_5_DECISIONS.md for lock ordering and the intentionally shared one-store cash-session policy. No unrestricted cashier reservation permission was added.
 
-## Remaining operational matrix for Phases 6-9 (future policy)
+## Enforced in Phase 6
 
-| Capability                    | OWNER | MANAGER                         | CASHIER             | PRODUCTION      |
-| ----------------------------- | ----- | ------------------------------- | ------------------- | --------------- |
-| Operational dashboard         | Yes   | Yes                             | Limited             | Production only |
-| POS and pickup orders         | Yes   | Yes                             | Yes                 | No              |
-| Necessary customer name/phone | Yes   | Yes                             | Yes                 | No              |
-| Sensitive CPF/private fields  | Yes   | Restricted                      | No                  | No              |
-| Customer exports/imports      | Yes   | No by default                   | No                  | No              |
-| Customer anonymization        | Yes   | No                              | No                  | No              |
-| Products/categories/prices    | Yes   | Yes                             | Read active         | Read relevant   |
-| Discount with reason          | Yes   | Yes                             | No                  | No              |
-| Eligible return decision      | Yes   | Yes, with reason                | No                  | No              |
-| Record one full payment       | Yes   | Yes                             | Assigned session    | No              |
-| Approve full refund           | Yes   | No by default                   | No                  | No              |
-| Open/operate/close cash       | Yes   | Yes                             | Assigned session    | No              |
-| Cash closing review           | Yes   | Yes                             | Own session summary | No              |
-| Traceable cash correction     | Yes   | Yes, with reason                | No                  | No              |
-| Business reports/export       | Yes   | Yes, excluding customer exports | No                  | Production only |
-| Users/roles/settings          | Yes   | No                              | No                  | No              |
-| Backup administration         | Yes   | No                              | No                  | No              |
-| Audit/security review         | Yes   | No by default                   | No                  | No              |
+| Named permission | OWNER                                                             | MANAGER                    | CASHIER                           | PRODUCTION |
+| ---------------- | ----------------------------------------------------------------- | -------------------------- | --------------------------------- | ---------- |
+| cash.current     | Minimal active identity plus separately authorized details        | Same                       | Active ID/opening actor/time only | No         |
+| cash.open        | Explicit opening and float                                        | Yes                        | No                                | No         |
+| cash.read        | Current/history/details/source lists and read-only reconciliation | Yes                        | No                                | No         |
+| cash.movements   | Addition/withdrawal/expense                                       | Yes                        | No                                | No         |
+| cash.close       | Reviewed version, explicit count and explanation                  | Yes                        | No                                | No         |
+| cash.review      | Append review of closed counted session                           | No                         | No                                | No         |
+| cash.correct     | One full linked opposite movement in current session              | No                         | No                                | No         |
+| cash.operations  | Own key plus current operation permission                         | Same, permitted kinds only | No                                | No         |
+
+Cashier may record existing authorized sale/payments against the shared active session, but cannot view drawer totals/float/history or close it. Manager has operational history and movements, explicitly no review/correction. Production has no cash route/navigation/projection. Full detail selects only necessary financial references, amounts, actors/times and restricted cash reasons; no customer identity/contact/CPF, catalog cost, session tokens, or tender details are returned by cash endpoints. Authorized linked order detail uses its existing separate permission check.
+
+Mutations reauthorize actor/session under the existing singleton before the operation/cash lock. Revocation first prevents completion; an already-held operation commits before a later revocation. Exact Origin/Host/CSRF apply to every new mutation, and uncertain-result lookup checks both actor ownership and current kind permission. Legacy closed sessions without a counted snapshot are read-only historical evidence, without fabricated review/counts. See CASH_SESSION_POLICY.md.
+
+## Remaining operational policy for Phases 7–9
+
+Business reports/exports must receive explicit named permissions and privacy projections before implementation. The earlier speculative matrix does not grant manager CPF, cashier historical cash, manager review/corrections or production financial reporting. Backup administration and installation/pilot acceptance remain pending. Existing identity and registry policies above remain authoritative.
 
 ## Session/setup controls implemented
 

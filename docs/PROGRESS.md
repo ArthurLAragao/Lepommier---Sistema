@@ -1,4 +1,89 @@
-# Progress and verification — Phase 5
+# Phase 6 checkpoint — acceptance gate passed
+
+Checkpoint: **17 October 2026**. **Phases 0–6 are implemented with regression coverage. Phase 6 acceptance gate passed. Phases 7–9 have not started. This is not an operational store release.** Full business reporting, verified backup/restore, installation acceptance and human store pilot remain pending.
+
+Implementation commit: **a4049b6** (cash lifecycle, migrations, UI and regression tests). Documentation is a separate checkpoint commit; the final commit hash and actual push result are reported after remote-main verification.
+
+## Inspection and preserved baseline
+
+Inspected clean main at **239d8a9a396672cbbaa71bd700e21d0f40c7278c**, existing authorized origin/main, all five migrations/schema and current documentation/security/privacy/inventory/reservation/order/payment/cash-foundation/manual guides. Reused strict TypeScript React/Vite/Fastify/shared Zod/Prisma 7/PostgreSQL, existing UI/native dialogs, portable real-PostgreSQL harness and production browser setup. The checkpoint matched actual Phase 5 code and limited opening-only cash foundation. No stack change, dependency/global installation, original migration rewrite or database reset/drop. Earlier security/session/setup/last-owner, privacy, immutable order/payment/refund, inventory ledger/ownership and exact Origin/Host/CSRF/CSP safeguards remain.
+
+## Implemented and decided
+
+- Complete explicit shared OPEN/CLOSED cash lifecycle; opening actor/time/float and existing financial relationships preserved. Sessions may span midnight; unpaid future orders do not prevent closing and may be paid in a later explicit session.
+- Append-only reasoned additions, withdrawals and categorized small cash expenses, safe optional reference and actor/server time. Physical outflows/refunds cannot exceed expected cash; no invented balance or backdating.
+- Derived exact physical cash, separate per-method gross/refund/net receipts, cash counted and signed operational difference. Tender/change never inflate receipts; Pix/cards never increase drawer cash. Existing per-record caps and 999,999,999,999-cent session cap use SQL numeric/BigInt/decimal-string DTOs.
+- Stale activity protection and atomic immutable counted snapshot/closing/audit/idempotent result. Payment/refund/checkout/movement versus closing commits into the open session before closure or fails/rolls back; checkout stock effects remain atomic. No locks while the employee counts.
+- OWNER/MANAGER manage cash and history; CASHIER reads only necessary active-session identity/time/actor and uses existing payment permissions; PRODUCTION has no financial access. Only OWNER reviews or performs a single exact linked opposite movement in the explicitly reviewed current session, with reason and physical confirmation. Original figures/history remain unchanged. No reopen, replacement count, generic adjustment, payment correction or reversal chains.
+- Current/history/detail/source pagination and Fortaleza opening-date/exact-session-ID filters, Portuguese movement/closing/review/correction dialogs, visible signed figures, stale reload and genuine committed-response retry/lookup. Read-only reconciliation separates integrity failures from a cash count difference; corruption/negative legacy expectation cannot be approved or silently repaired. No customer PII/cost/tender leak through cash projections.
+
+Policies: PHASE_6_DECISIONS.md, CASH_SESSION_POLICY.md, CASH_OPERATOR_GUIDE.pt-BR.md and updated permissions/rules/metrics/architecture/assumptions/testing/manual guides. Full accounting, bank/Pix/card settlement verification, fiscal issuance, payables, cash export, denomination counting and Phase 7 dashboard/reporting are outside this checkpoint.
+
+## Additive migrations
+
+1. **202610170006_cash**: CashMovement/CashClosing/CashReview; activity/review counters; deliberate indexes/restrictive references; SQL totals and guards; immutable snapshot/append-only history; source counter and operation-target consistency. Existing open activity backfills from actual payment/refund records. Preexisting closed sessions are marked legacy without fabricated count/actor/snapshot.
+2. **202610170007_cash_session_entry**: future sessions must start open at initial versions and cannot impersonate legacy closures. Added separately after 006 had applied in isolated verification.
+
+All five earlier SQL migrations and package-lock.json compared to 239d8a9 after line-ending normalization: unchanged. Seven migrations cleanly apply. A genuine populated five-migration upgrade preserves identity/setup/session/audit/registry/inventory markers, internal and order-owned reservations, fulfilled/unfulfilled orders, cash/Pix/debit/credit payments, an older-payment refund and open/closed sessions. SQL protections are tested directly; Prisma diff alone does not represent triggers.
+
+## Commands actually executed and final results
+
+Runtime **bundled Node 24.19.0**, explicit npm CLI on Windows; existing portable **PostgreSQL 17.10**, installed Edge production browser. Host Node 25 was not substituted. No Docker/TLS/LAN verification claim.
+
+| Actual command/check                                                                               | Final result                                                                |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| npm run db:generate; Prisma schema formatting during migration preparation                         | Passed, Prisma 7.10.1                                                       |
+| npm run db:validate                                                                                | Passed                                                                      |
+| npm run db:migrate:test; clean and foundation/identity/registry/inventory/orders-baseline upgrades | Passed, additive preservation without reset/drop                            |
+| prisma migrate status                                                                              | Seven migrations, up to date                                                |
+| prisma migrate diff --from-config-datasource --to-schema apps/api/prisma/schema.prisma --exit-code | Passed, no difference                                                       |
+| npm run typecheck                                                                                  | Passed for shared/API/web/tools/tests                                       |
+| npm run lint                                                                                       | Passed, zero warnings                                                       |
+| npm run format; npm run format:check                                                               | Passed, including checkpoint/operator documents                             |
+| npm test                                                                                           | **124 passed / 12 files**, 118 retained + 6 cash                            |
+| npm run test:integration through work/verify-postgres.mjs                                          | **182 passed / 6 files**, 144 retained + 38 cash                            |
+| RUN_POMMIER_E2E=1 work/verify-postgres.mjs invoking npm run build and npm run test:e2e             | Production build passed; **78 browser tests passed**, 61 retained + 17 cash |
+| work/verify-phase6-preservation.mjs; private-value/path and Git whitespace review                  | Five original migrations/lockfile preserved; no private candidate matches   |
+| Private preview start → graceful stop → restart and URL/readiness/local assets/CSP                 | Passed; no default account or operational fixture                           |
+| Preserved Phase 4/5 database fingerprints before/after work                                        | All 19/25 public tables match; migration counts still 4/5                   |
+
+The final real database run includes the strengthened negative-legacy-drawer guard and source-corruption assertion. Browser assets/server use real PostgreSQL and synthetic isolated fixtures, with normal authentication/CSRF. Keyboard/native dialogs, Axe, 1366×768 and 390×844 passed; desktop/narrow cash screenshots were visually inspected. No failing test was disabled. Test-owned PostgreSQL on 55437 and browser server shut down normally; shared manual PostgreSQL on 55438 remained running.
+
+## Failures found and corrected
+
+- Initial strict TypeScript caught unsupported UUID prefix filtering/optional shapes and fixture typing; exact ID search and explicit nullable/select/request contracts fixed them. Lint caught control-character regex use; readable codepoint validation fixed it without rule suppression.
+- Invalid money reached an eager BigInt refinement after failed base validation; positive-string refinement now returns structured validation instead of a 500, covered by unit/API cases. Signed money display now correctly renders negative sub-real differences.
+- First uncommitted 006 attempt had CASE syntax error. Transaction rollback/no applied schema change was verified, only its isolated failed migration marker was resolved, and corrected still-unapplied SQL succeeded. Applied SQL was then preserved; additional new-session protection uses 007.
+- Expanded isolated database creation exhausted disk. Only the inspected task-local regenerable npm download cache was removed, preserving all databases/dependencies/manual data. Fresh runs then passed. One transient existing registry query timeout on the loaded Windows test run disappeared on complete reruns without changing application limits or removing assertions.
+- New test fixtures initially omitted required account-restoration fields and a difference explanation on deliberately corrupted closing data; fixtures now satisfy the real contracts while retaining revocation/drift assertions. The former Phase 5 raw close fixture now uses the real counted-close API.
+- Axe found a status role replacing definition-list semantics in the closing form. Moving the live status inside the definition value preserved announcements and passed all 78 browser cases. Final review added a financial-posting guard for preexisting negative expected cash and proved rejection without repair.
+- Restricted Windows process spawning initially blocked esbuild/PostgreSQL. Running the same authorized checks outside the restricted-token sandbox passed; no application security setting was weakened.
+
+## Manual environments and data safety
+
+All three local applications and the shared PostgreSQL cluster are running at this checkpoint. HTTP page/readiness both 200 and CSP present:
+
+| Application         | Exact URL              | Database and setup                                                                                                 |
+| ------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Preserved Phase 4   | http://127.0.0.1:3333/ | le_pommier_manual, four migrations, existing initialized installation, private frozen compatible runtime           |
+| Preserved Phase 5   | http://[::1]:3335/     | le_pommier_phase5_preview, five migrations, existing initialized installation, privately frozen compatible runtime |
+| New Phase 6 preview | http://localhost:3336/ | le_pommier_phase6_preview, seven migrations, separate uninitialized installation                                   |
+
+These are separate databases/users in **one** PostgreSQL 17.10 cluster at 127.0.0.1:55438, physically data/manual-testing/postgres. They are not separate PostgreSQL installations. The Phase 4 app was paused for automated port 3333 checks and restored; Phase 5 remains compatible with its unchanged database. Neither old database was migrated to Phase 6. Table fingerprints match; this is preservation evidence, **not verified full backup/restore**. Missing pg_dump/pg_restore remains a blocker for an in-place important-data upgrade, so no global backup tool was installed.
+
+Phase 6 was created empty: verified zero accounts/products/orders/cash sessions, seven migrations and local assets responding. Its private key is data/phase6-preview/installation-secret; the authorized installer retrieves it privately and chooses the first owner credentials through the real loopback/Origin/CSRF setup screen. No key/credential is printed or served publicly. There is no default owner or automatic cash/product/stock/sale seed. Distinct IPv4/IPv6/localhost cookie hosts prevent cross-environment host-cookie overlap; ports alone do not isolate cookies.
+
+Private launchers use detached hidden processes; no terminal window must stay open. Phase 6 graceful stop/restart was actually verified. Exact start/stop/status commands, private key location and shared-cluster stop order are in MANUAL_TESTING.pt-BR.md. The original launcher refuses to stop shared PostgreSQL while either preview depends on it. Private .env/key/database/log/runtime/snapshot/test artifacts remain outside Git. No actual customer data was copied into the new preview or tests, no public interface/deployment was enabled.
+
+## Remaining boundary and precise Phase 7 continuation
+
+**Stop after Phase 6.** Phase 7 must first inspect this seven-migration baseline and reconcile metric/permission definitions with immutable inventory/order/payment/refund/cash sources. Implement authorized tabular dashboard/report queries before charts/CSV, with Fortaleza boundaries, discounts, future paid pickups, anonymous sales, cancellations, later-session refunds and customer privacy. Compare every displayed/exported figure to underlying rows and maintain all 0–6 regressions. Do not turn cash difference into profit or count electronic receipts as physical cash. No Phase 7 implementation has started.
+
+Full restore/retention/install/update/restart acceptance, real operator/assistive-technology/store-day pilot, larger-volume performance and Docker/TLS/proxy/LAN remain unverified/pending. Known nonfatal upstream optimizer, pg client query, bundle-size and color-environment warnings are disclosed. See KNOWN_LIMITATIONS.md and TEST_MATRIX.md. Normal reviewed origin/main checkpoint is authorized; no force-push, history rewrite, unrelated merge, public repository change or deployment is authorized. Commit hashes/push outcome are reported after the actual remote verification.
+
+## Historical Phase 5 checkpoint
+
+# Progress and verification - Phase 5
 
 Checkpoint: **17 October 2026**. **Phases 0–5 are implemented with regression coverage. Phase 5 acceptance gate passed. Phases 6–9 remain pending. This is not an operational store release.** Full cash closing/reconciliation is not implemented.
 

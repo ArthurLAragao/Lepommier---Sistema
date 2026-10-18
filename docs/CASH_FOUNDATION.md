@@ -1,3 +1,5 @@
+> Phase 6 supersedes this historical limited foundation with counted closing, movements, review, narrow linked corrections and reconciliation. Existing Phase 5 records and references remain preserved. Current policy: [CASH_SESSION_POLICY](CASH_SESSION_POLICY.md); operator workflow: [Portuguese cash guide](CASH_OPERATOR_GUIDE.pt-BR.md). The text below describes the Phase 5 boundary at that checkpoint.
+
 # Limited cash foundation (Phase 5)
 
 Phase 5 requires real payment/refund session references. CashSession has immutable opening identity, actor, timestamp and integer-centavo float, with a database partial unique index allowing one active store session. OWNER/MANAGER explicitly open it inside Vendas/Pedidos; no seed, automatic opening or prerequisite bypass exists. Authorized sales operators share this one session. Each payment/refund still records its own actor. CASHIER cannot open it or see its opening float.

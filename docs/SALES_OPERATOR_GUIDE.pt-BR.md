@@ -1,10 +1,12 @@
+> Atualização da Fase 6: suprimentos, sangrias, despesas, fechamento contado, revisão e estorno vinculado de movimentação estão disponíveis conforme as permissões. Consulte [o guia de caixa](CASH_OPERATOR_GUIDE.pt-BR.md). Os controles de acesso e os fluxos de vendas abaixo continuam válidos, com o caixa descrito no guia atual. Relatórios gerais, contabilidade e conciliação bancária continuam pendentes.
+
 # Vendas e pedidos — guia de conferência da Fase 5
 
-Esta versão permite conferir vendas, pedidos e retiradas locais. Ainda não é uma liberação para operação diária: fechamento de caixa, relatórios completos, restauração e piloto humano estão pendentes. Não há integração bancária, envio de WhatsApp, entrega da loja ou documento fiscal. Cadastre somente dados autorizados; os testes automáticos usam dados fictícios isolados.
+Esta versão permite conferir vendas, pedidos e retiradas locais. Ainda não é uma liberação para operação diária: relatórios completos, restauração e piloto humano estão pendentes. O fechamento contado está disponível no módulo Caixa. Não há integração bancária, envio de WhatsApp, entrega da loja ou documento fiscal. Cadastre somente dados autorizados; os testes automáticos usam dados fictícios isolados.
 
 ## Antes de receber pagamentos
 
-O proprietário ou gerente deve abrir explicitamente a sessão em Vendas/Pedidos, informando o fundo inicial em reais. Nunca existe abertura automática. O operador usa a única sessão ativa da loja; cada recebimento identifica seu responsável. A tela Caixa completa e o fechamento ainda estão indisponíveis. Não simule fechamento alterando o banco.
+O proprietário ou gerente deve abrir explicitamente a sessão em Caixa ou pelo acesso em Vendas/Pedidos, informando o fundo inicial em reais. Nunca existe abertura automática. O operador usa a única sessão ativa da loja; cada recebimento identifica seu responsável. A tela Caixa permite movimentos, conferência, fechamento contado e revisão conforme o perfil. Não simule fechamento alterando o banco.
 
 ## Venda de balcão
 

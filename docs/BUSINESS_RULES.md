@@ -28,7 +28,7 @@ Commands use 1–100,000 whole units; each batch caps at 1 trillion. BigInt/nume
 
 Waste records batch, quantity, reason, user and time. OTHER requires explanation. Disposing of reserved units is rejected until affected reservations are resolved. Waste beyond eligible unreserved batch quantity is rejected. Production loss and finished-product waste must not double-count the same physical units. Adjustments require permission, reason, before/after context and audit.
 
-## Cash and closing (future Phase 6 rules, not implemented)
+## Cash and closing (implemented Phase 6)
 
 One store drawer and one active session. Expected physical cash = opening float + cash receipts + additions − cash refunds − withdrawals − cash expenses. Pix/card are reported separately and never increase physical cash. Closing is transactional, records counted cash, difference and explanation, and preserves the snapshot. Later corrections are traceable authorized movements, never silent edits/deletion of closed records.
 
@@ -54,6 +54,14 @@ Transactions and database safeguards protect last-unit races, duplicate payment/
 
 ## Phase 5 resolved policies
 
-OWNER/MANAGER explicitly open one shared active cash session; there is no close endpoint or automatic opening. Only OWNER approves refunds/paid cancellation. MANAGER may grant coded discounts; CASHIER may sell/pay/handover/cancel unpaid orders without discounts/refunds/opening. Zero-total drafts may exist but confirmation/checkout rejects zero totals; no no-charge completion or fictitious cash receipt. Each command has at most 20 distinct products and each line 1-100,000 units; subtotal/total cap 99,999,999 centavos, exact proportional discount allocation.
+OWNER/MANAGER explicitly open and close one shared active cash session and post reasoned physical movements; there is no automatic opening or midnight closure. Only OWNER approves refunds/paid cancellation. MANAGER may grant coded discounts; CASHIER may sell/pay/handover/cancel unpaid orders without discounts/refunds/opening. Zero-total drafts may exist but confirmation/checkout rejects zero totals; no no-charge completion or fictitious cash receipt. Each command has at most 20 distinct products and each line 1-100,000 units; subtotal/total cap 99,999,999 centavos, exact proportional discount allocation.
 
 WHATSAPP requires an active non-anonymized customer and future pickup within 365 days, interpreted in America/Fortaleza independently of browser timezone. Confirmation revalidates current customer/product/version/price and eligibility through pickup date. Confirmed items/customer/pickup are fixed; cancellation/recreation replaces amendments and expired allocations. Paid cancellation refunds/releases atomically; fulfilled refund preserves handover and consumption. Refund is always full and original-method with explicit confirmation of external execution, using the current session. Neither bank verification nor a second charge/refund after network failure is implied. See ORDER_PAYMENT_POLICY.md, CASH_FOUNDATION.md and PHASE_5_DECISIONS.md.
+
+## Phase 6 resolved policies
+
+Cash payments add their payment amount, never tendered cash plus change. Expected physical cash also includes signed linked movement reversals; electronic receipts remain separate. Derived per-method gross/refund/net receipts do not represent bank settlement or profit. Every financial source locks the open session, increments its activity version and commits before closing or fails atomically. Closing requires the reviewed version, explicit counted cash, a reason for any difference and an immutable source snapshot. Unpaid future orders do not block closing; their later payment requires a new active session.
+
+Money per original movement/opening/payment retains the existing 99,999,999-cent cap; session gross/refund/expected/counted aggregate cap is 999,999,999,999 centavos. Withdrawal, expense, negative reversal and cash refund cannot make derived physical cash negative. No hidden override or arbitrary backdating. Existing inconsistent/negative legacy sessions are reported and require a separately controlled maintenance investigation, never automatic repair or fabricated cash.
+
+OWNER/MANAGER manage current and historical cash; only OWNER appends review and one full linked reversal per original non-reversal movement. Review never changes money. Closed sessions cannot reopen and original counts cannot be replaced. A real opposite physical movement is posted in the explicitly reviewed current session, with reason and confirmation; payment/refund errors use their established domain workflow. No generic balance adjustment, editing/deleting posted movements, reversal chains or backdated corrections. See CASH_SESSION_POLICY.md and PHASE_6_DECISIONS.md.
