@@ -34,6 +34,7 @@ import { Prisma } from '../generated/prisma/client.js';
 import { AuthService, audit, type Principal, type SecurityEvent } from '../auth/service.js';
 import { InventoryService } from '../inventory/service.js';
 import { AppError } from '../errors.js';
+import { cashPostingCheck } from '../cash/service.js';
 type Tx = Prisma.TransactionClient;
 type Actor = { id: string; role: Role };
 const actorSelect = { displayName: true } as const;
@@ -180,7 +181,7 @@ export class SalesService {
           ...(hasPermission(actor.role, 'cash.open') ? { openingFloatCents: true } : {}),
         },
       });
-      return cashCurrentSchema.parse(transport({ session, limitedFoundation: true }));
+      return cashCurrentSchema.parse(transport({ session, limitedFoundation: false }));
     });
   }
   openCash(
@@ -538,6 +539,7 @@ export class SalesService {
       change = tender - order.totalCents;
     } else if (input.tenderedCents !== undefined && input.tenderedCents !== null)
       throw fail('PAYMENT_METHOD', 'Pix e cartão não têm dinheiro recebido/troco em espécie.', 400);
+    await cashPostingCheck(tx, sessionId, order.totalCents, 'PAYMENT', input.method);
     await tx.payment.create({
       data: {
         orderId: order.id,
@@ -752,6 +754,7 @@ export class SalesService {
       );
     if (!order.payment || order.refund)
       throw fail('REFUND_STATE', 'Não há pagamento elegível para um novo reembolso.');
+    await cashPostingCheck(tx, session, order.payment.amountCents, 'REFUND', order.payment.method);
     await tx.refund.create({
       data: {
         orderId: order.id,

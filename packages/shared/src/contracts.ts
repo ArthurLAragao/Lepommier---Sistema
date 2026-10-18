@@ -78,7 +78,7 @@ export const modules = [
     id: 'cash',
     label: 'Caixa',
     phase: 6,
-    available: false,
+    available: true,
     description: 'Abertura, entradas, saídas e conferência do fechamento.',
   },
   {
@@ -111,7 +111,7 @@ export type DatabaseStatus = z.infer<typeof databaseStatusSchema>;
 
 export const systemStatusSchema = z.object({
   version: z.string(),
-  phase: z.literal(5),
+  phase: z.literal(6),
   businessTimezone: z.literal(BUSINESS_TIMEZONE),
   businessDate: businessDateSchema,
   timestamp: z.iso.datetime(),

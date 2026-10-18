@@ -119,7 +119,8 @@ export default function Catalog({ current }: { current: CurrentUser }) {
       </div>
       <p className="info-note">
         Cadastro por unidade inteira. Consulte os lotes em Estoque e registre vendas e retiradas em
-        Vendas ou Pedidos. O fechamento de caixa será implementado na próxima fase.
+        Vendas ou Pedidos. Movimentos e fechamento contado estão disponíveis em Caixa para os
+        responsáveis.
       </p>
       {tab === 'products' ? <Products current={current} /> : <Categories current={current} />}
     </section>

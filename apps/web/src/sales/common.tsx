@@ -168,8 +168,8 @@ export function CashNotice({ current }: { current: CurrentUser }) {
                 : 'Pagamento e reembolso exigem abertura explícita por proprietário ou gerente.'}
             </p>
             <p>
-              Base limitada: abertura e vínculo de pagamentos. Encerramento, contagem, diferenças e
-              movimentações de caixa ainda não estão disponíveis.
+              Confira movimentos, contagem, diferenças e fechamento no módulo Caixa. Pix e cartões
+              não aumentam o dinheiro físico da gaveta.
             </p>
           </div>
           {!result.data.session && hasPermission(current.user.role, 'cash.open') && (
@@ -189,7 +189,7 @@ export function CashNotice({ current }: { current: CurrentUser }) {
     </>
   );
 }
-function CashOpening({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+export function CashOpening({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const [float, setFloat] = useState('');
   const command = useStockCommand('/cash-sessions', onDone, '/sales/operations');
   function submit(e: FormEvent) {
@@ -201,11 +201,12 @@ function CashOpening({ onClose, onDone }: { onClose: () => void; onDone: () => v
     }
   }
   return (
-    <Modal title="Abrir sessão de caixa — base limitada" onClose={() => command.close(onClose)}>
+    <Modal title="Abrir caixa" onClose={() => command.close(onClose)}>
       <form className="auth-form" onSubmit={submit}>
         <p>
-          Informe o fundo físico contado agora. Não há encerramento/reconciliação nesta fase; não
-          use como controle completo de caixa.
+          Informe o fundo físico contado agora. A abertura é explícita e há apenas uma sessão ativa
+          compartilhada na loja. A sessão continua aberta ao virar o dia, até o fechamento com
+          contagem.
         </p>
         <Field
           label="Fundo inicial contado em R$"

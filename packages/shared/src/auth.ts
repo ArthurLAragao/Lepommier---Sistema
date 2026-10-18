@@ -44,7 +44,21 @@ export type Permission =
   | 'orders.refund'
   | 'orders.discount'
   | 'orders.operations'
-  | 'cash.open';
+  | 'cash.open'
+  | 'cash.current'
+  | 'cash.read'
+  | 'cash.movements'
+  | 'cash.close'
+  | 'cash.review'
+  | 'cash.correct'
+  | 'cash.operations';
+const cashManagement: Permission[] = [
+  'cash.current',
+  'cash.read',
+  'cash.movements',
+  'cash.close',
+  'cash.operations',
+];
 const orderOperations: Permission[] = [
   'orders.read',
   'orders.write',
@@ -75,6 +89,9 @@ const customerManagement: Permission[] = [
 ];
 const permissions: Record<Role, readonly Permission[]> = {
   OWNER: [
+    ...cashManagement,
+    'cash.review',
+    'cash.correct',
     ...orderOperations,
     'orders.refund',
     'orders.discount',
@@ -94,6 +111,7 @@ const permissions: Record<Role, readonly Permission[]> = {
     'catalog.cost',
   ],
   MANAGER: [
+    ...cashManagement,
     ...orderOperations,
     'orders.discount',
     'cash.open',
@@ -105,6 +123,7 @@ const permissions: Record<Role, readonly Permission[]> = {
     'catalog.cost',
   ],
   CASHIER: [
+    'cash.current',
     ...orderOperations,
     'profile.self',
     ...customerBasic,

@@ -1597,6 +1597,75 @@ td strong {
   width: min(1040px, calc(100vw - 2rem));
   max-width: 1040px;
 }
+.cash-page,
+.cash-detail {
+  min-width: 0;
+}
+.cash-detail {
+  display: grid;
+  gap: 1.25rem;
+}
+.cash-id {
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+}
+.cash-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+.cash-totals > div {
+  border: 1px solid var(--color-border);
+  background: #fffdfa;
+  padding: 1.1rem;
+  border-radius: 8px;
+  min-width: 0;
+}
+.cash-totals dt,
+.cash-count-summary dt {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+.cash-totals dd {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0.55rem 0 0;
+  overflow-wrap: anywhere;
+}
+.cash-totals > div:last-child {
+  background: #edf1e8;
+  border-color: #bdcbb8;
+}
+.cash-count-summary {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+}
+.cash-count-summary dd {
+  font-size: 1.4rem;
+  margin: 0.3rem 0 0;
+  overflow-wrap: anywhere;
+}
+.cash-closing-summary {
+  border: 1px solid #d7c7ab;
+  background: #faf4e7;
+  border-radius: 8px;
+  padding: 1.2rem;
+}
+.cash-actions {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+.cash-page td .button {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.cash-page .registry-filters {
+  flex-wrap: wrap;
+}
 .pos-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

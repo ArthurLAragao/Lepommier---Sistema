@@ -152,7 +152,7 @@ async function action(page: Page, label: string) {
   ).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: label, exact: true }).click();
 }
-test('explicit cash opening is required and limited foundation does not claim complete cash control', async ({
+test('explicit cash opening is required and linked cash control does not claim bank verification', async ({
   page,
 }) => {
   await page.goto('/#sales');
@@ -164,10 +164,9 @@ test('explicit cash opening is required and limited foundation does not claim co
   await expect(page.getByRole('dialog')).not.toBeVisible();
   await expect(page.getByText('Sessão de caixa aberta', { exact: true })).toBeVisible();
   await expect(
-    page.getByText(
-      'Encerramento, contagem, diferenças e movimentações de caixa ainda não estão disponíveis.',
-      { exact: false },
-    ),
+    page.getByText('Confira movimentos, contagem, diferenças e fechamento no módulo Caixa.', {
+      exact: false,
+    }),
   ).toBeVisible();
 });
 test('POS confirms anonymous cash sale, change and non-fiscal detail using real stock', async ({

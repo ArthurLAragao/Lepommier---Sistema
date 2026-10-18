@@ -53,6 +53,9 @@ model User {
   payments              Payment[]
   refunds               Refund[]
   cashSessions          CashSession[]
+  cashMovements         CashMovement[]
+  cashClosings          CashClosing[]
+  cashReviews           CashReview[]
 }
 
 model Session {
@@ -236,6 +239,9 @@ model InventoryOperation {
   payment       Payment?
   refund        Refund?
   cashSession   CashSession?
+  cashMovement  CashMovement?
+  cashClosing   CashClosing?
+  cashReview    CashReview?
 
   @@unique([actorId, key])
   @@index([createdAt])
@@ -412,6 +418,81 @@ model CashSession {
   operation         InventoryOperation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   payments          Payment[]
   refunds           Refund[]
+  activityVersion   Int                @default(1)
+  reviewVersion     Int                @default(0)
+  legacyClosed      Boolean            @default(false)
+  closing           CashClosing?
+  movements         CashMovement[]
+  reviews           CashReview[]
+
+  @@index([openedAt, id])
+  @@index([closedAt, id])
+}
+
+enum CashMovementKind {
+  CASH_ADDITION
+  CASH_WITHDRAWAL
+  CASH_EXPENSE
+  CASH_REVERSAL
+}
+
+enum CashReviewDecision {
+  APPROVED
+  NEEDS_ATTENTION
+}
+
+model CashMovement {
+  id          String             @id @default(uuid()) @db.Uuid
+  sessionId   String             @db.Uuid
+  session     CashSession        @relation(fields: [sessionId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  kind        CashMovementKind
+  amountCents BigInt
+  direction   Int
+  reason      String             @db.VarChar(240)
+  category    String?            @db.VarChar(24)
+  reference   String?            @db.VarChar(64)
+  actorId     String             @db.Uuid
+  actor       User               @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  recordedAt  DateTime           @db.Timestamptz(3)
+  operationId String             @unique @db.Uuid
+  operation   InventoryOperation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reversesId  String?            @unique @db.Uuid
+  reverses    CashMovement?      @relation("CashReversal", fields: [reversesId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reversal    CashMovement?      @relation("CashReversal")
+
+  @@index([sessionId, recordedAt, id])
+}
+
+model CashClosing {
+  sessionId       String             @id @db.Uuid
+  session         CashSession        @relation(fields: [sessionId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  activityVersion Int
+  expectedCents   BigInt
+  countedCents    BigInt
+  differenceCents BigInt
+  explanation     String?            @db.VarChar(500)
+  totals          Json
+  actorId         String             @db.Uuid
+  actor           User               @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  recordedAt      DateTime           @db.Timestamptz(3)
+  operationId     String             @unique @db.Uuid
+  operation       InventoryOperation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+}
+
+model CashReview {
+  id          String             @id @default(uuid()) @db.Uuid
+  sessionId   String             @db.Uuid
+  session     CashSession        @relation(fields: [sessionId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  version     Int
+  decision    CashReviewDecision
+  note        String             @db.VarChar(500)
+  actorId     String             @db.Uuid
+  actor       User               @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  recordedAt  DateTime           @db.Timestamptz(3)
+  operationId String             @unique @db.Uuid
+  operation   InventoryOperation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([sessionId, version])
 }
 
 model Order {

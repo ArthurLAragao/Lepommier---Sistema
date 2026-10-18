@@ -48,6 +48,10 @@ type Kind =
   | 'ORDER_CANCEL'
   | 'ORDER_REFUND'
   | 'CASH_OPEN'
+  | 'CASH_MOVEMENT'
+  | 'CASH_CLOSE'
+  | 'CASH_REVIEW'
+  | 'CASH_REVERSE'
   | 'OPENING'
   | 'RECEIPT'
   | 'PLAN'
@@ -72,6 +76,10 @@ const permissionFor: Record<Kind, Permission> = {
   ORDER_CANCEL: 'orders.cancel',
   ORDER_REFUND: 'orders.refund',
   CASH_OPEN: 'cash.open',
+  CASH_MOVEMENT: 'cash.movements',
+  CASH_CLOSE: 'cash.close',
+  CASH_REVIEW: 'cash.review',
+  CASH_REVERSE: 'cash.correct',
   OPENING: 'inventory.opening',
   RECEIPT: 'inventory.receive',
   PLAN: 'production.manage',
@@ -232,7 +240,8 @@ export class InventoryService {
   lookup(
     principal: Principal,
     key: string,
-    permission: 'inventory.operations' | 'orders.operations' = 'inventory.operations',
+    permission:
+      'inventory.operations' | 'orders.operations' | 'cash.operations' = 'inventory.operations',
   ) {
     return this.run(principal, permission, async (tx, actor) => {
       const op = await tx.inventoryOperation.findUnique({

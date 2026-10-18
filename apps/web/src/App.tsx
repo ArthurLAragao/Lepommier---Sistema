@@ -47,6 +47,7 @@ import Catalog from './registry/Catalog.js';
 import Inventory from './inventory/Inventory.js';
 import Production from './inventory/Production.js';
 import Orders from './sales/Orders.js';
+import Cash from './cash/Cash.js';
 import { AccountSettings } from './auth/AccountSettings.js';
 import { getSystemStatus, RequestError } from './api.js';
 import {
@@ -256,7 +257,8 @@ export default function App({
                   (module.id !== 'production' ||
                     hasPermission(current.user.role, 'production.manage')) &&
                   (!['sales', 'orders'].includes(module.id) ||
-                    hasPermission(current.user.role, 'orders.read')),
+                    hasPermission(current.user.role, 'orders.read')) &&
+                  (module.id !== 'cash' || hasPermission(current.user.role, 'cash.current')),
               )
               .map((module) => {
                 const Icon = icons[module.id];
@@ -421,6 +423,15 @@ export default function App({
                 description="Seu perfil não acessa vendas, pedidos ou pagamentos."
               />
             )
+          ) : active === 'cash' ? (
+            hasPermission(current.user.role, 'cash.current') ? (
+              <Cash current={current} />
+            ) : (
+              <EmptyState
+                title="Acesso restrito"
+                description="Seu perfil não tem acesso ao caixa ou informações financeiras."
+              />
+            )
           ) : active === 'inventory' ? (
             <Inventory current={current} />
           ) : active === 'production' ? (
@@ -495,7 +506,11 @@ export default function App({
                     icon: ShoppingBag,
                     detail: 'Consulte a lista de pedidos',
                   },
-                  { label: 'Situação do caixa', icon: Wallet, detail: 'Após ativação do caixa' },
+                  {
+                    label: 'Situação do caixa',
+                    icon: Wallet,
+                    detail: 'Consulte a sessão no módulo Caixa',
+                  },
                 ].map(({ label, icon: Icon, detail }) => (
                   <Card className="metric-card" key={label}>
                     <div className="metric-title">
@@ -713,8 +728,9 @@ function SettingsPage({
           <ShieldCheck size={19} aria-hidden="true" />
           <p>
             Clientes, catálogo, produção, estoque, vendas e pedidos estão disponíveis conforme seu
-            perfil. Pagamentos são confirmados manualmente. Caixa possui base limitada de abertura;
-            encerramento, reconciliação e relatórios completos dependem das próximas fases.
+            perfil. Pagamentos são confirmados manualmente. Caixa permite movimentos e fechamento
+            contado, conciliação das fontes e revisão. Relatórios completos, restauração e piloto
+            ainda dependem das próximas fases.
           </p>
         </div>
         {status?.database.status !== 'ready' && (

@@ -61,10 +61,21 @@ async function cash() {
     okay(await cmd('/api/cash-sessions', { openingFloatCents: '10000' }));
 }
 async function closeCashFixture() {
-  await db.client.cashSession.updateMany({
+  const s = await db.client.cashSession.findFirst({
     where: { closedAt: null },
-    data: { closedAt: new Date(BASE.getTime() + 1) },
+    select: { id: true, activityVersion: true },
   });
+  if (!s) return;
+  const view = await req('GET', `/api/cash/sessions/${s.id}`);
+  expect(view.statusCode).toBe(200);
+  okay(
+    await cmd('/api/cash/close', {
+      sessionId: s.id,
+      activityVersion: s.activityVersion,
+      countedCents: view.json().totals.expectedCents,
+      confirmed: true,
+    }),
+  );
 }
 async function customer(extra: Record<string, unknown> = {}) {
   const r = await req('POST', '/api/customers', {

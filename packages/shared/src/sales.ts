@@ -184,7 +184,8 @@ export function priceCart(
 }
 export function formatOrderMoney(value: string) {
   const cents = BigInt(value);
-  return `R$\u00a0${new Intl.NumberFormat('pt-BR').format(cents / 100n)},${String(cents % 100n).padStart(2, '0')}`;
+  const absolute = cents < 0n ? -cents : cents;
+  return `${cents < 0n ? '-' : ''}R$\u00a0${new Intl.NumberFormat('pt-BR').format(absolute / 100n)},${String(absolute % 100n).padStart(2, '0')}`;
 }
 export const orderQuery = z
   .object({
@@ -317,7 +318,7 @@ export const cashCurrentSchema = z.object({
       openingFloatCents: quantityText.optional(),
     })
     .nullable(),
-  limitedFoundation: z.literal(true),
+  limitedFoundation: z.literal(false),
 });
 export const customerHistorySchema = z.object({
   orders: orderListSchema,
